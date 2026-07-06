@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Ludo Rex — Play Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS variables — must stay vanilla, Tailwind CDN has no config to define these */
+        :root {
+            --cream: #FBF7EE;
+            --paper: #fff;
+            --ink: #2B2620;
+            --ink-soft: #6b6459;
+            --board-line: #d8cfc0;
+            --yellow: #ffd76a;
+            --yellow-dark: #e0a91f;
+            --green-dark: #1f7a4d;
+            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        /* Reused surface classes (background var + shadow var repeated 3x — cleaner as a class) */
+        .board-shell {
+            background: var(--cream);
+            padding: 16px;
+            border-radius: 22px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .panel-card {
+            background: var(--cream);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .winner-card {
+            background: var(--cream);
+            border-radius: 26px;
+            padding: 40px 46px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            max-width: 380px;
+        }
+
+        .start-btn {
+            background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-dark) 100%);
+            color: #3a2600;
+            border: none;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 11px 28px;
+            border-radius: 13px;
+            box-shadow: 0 5px 0 #9c6c10, var(--shadow-sm);
+            transition: transform .1s ease, box-shadow .1s ease;
+        }
+
+        .start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #9c6c10;
+        }
+
+        /* 15x15 board grid — dense/specific, not worth converting */
+        .board {
+            width: min(100%, 88vw);
+            height: min(568px, 88vw);
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 0 2px var(--board-line);
+        }
+
+        .cell {
+            position: relative;
+            border: 0.5px solid var(--board-line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell.path {
+            background: var(--paper);
+        }
+
+        /* pseudo-element — impossible in Tailwind without a plugin */
+        .cell.safe::before {
+            content: '★';
+            position: absolute;
+            font-size: 60%;
+            color: rgba(43, 38, 32, 0.28);
+        }
+
+        /* multi-property transitions with different durations/easings per property */
+        .token {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            transition: left .28s cubic-bezier(.4, 1.4, .6, 1), top .28s cubic-bezier(.4, 1.4, .6, 1), transform .15s ease;
+            z-index: 5;
+        }
+
+        .token.movable {
+            animation: tokenPulse 1s ease-in-out infinite;
+            cursor: pointer;
+        }
+
+        .token.movable:hover {
+            transform: scale(1.15);
+        }
+
+        /* dice keyframes + gradient (arbitrary-value class also acceptable, kept here since reused w/ conditional states) */
+        .dice3d {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(145deg, #ffffff, #e8e0cc);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            font-size: 30px;
+            font-weight: 800;
+            user-select: none;
+            transition: transform .12s ease;
+        }
+
+        .dice3d.can-roll {
+            animation: diceIdle 1.8s ease-in-out infinite;
+        }
+
+        .dice3d.rolling {
+            animation: diceRoll 0.55s ease-in-out;
+        }
+
+        /* all keyframes */
+        @keyframes tokenPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 0 rgba(255, 255, 255, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 6px rgba(255, 255, 255, 0);
+            }
+        }
+
+        @keyframes diceIdle {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-4px) rotate(-4deg);
+            }
+        }
+
+        @keyframes diceRoll {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+
+            25% {
+                transform: rotate(90deg) scale(0.85);
+            }
+
+            50% {
+                transform: rotate(180deg) scale(1.1);
+            }
+
+            75% {
+                transform: rotate(270deg) scale(0.9);
+            }
+
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+
+        /* custom breakpoints — Tailwind CDN has no config to redefine these, so keep vanilla */
+        @media (max-width: 880px) {
+            .game-wrap-legacy-note {
+                /* if you kept any wrapper class, adjust flex-direction here */
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* your existing 480px rules for .brand h1, .mode-grid, .menu-card, .panel */
+        }
+
+        .app {
+            background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
+            background-position: center;
+            background-size: contain;
+            text-align: center;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+            opacity: 0.9;
+        }
+
+        .home {
+            background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
+            background-position: center;
+            background-size: cover;
+            text-align: center;
+            overflow: hidden;
+            width: 40%;
+            height: 100vh;
+            opacity: 0.9;
+        }
+
+        .game {
+            background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
+            background-position: center;
+            background-size: cover;
+            text-align: center;
+            overflow: hidden;
+            width: 40%;
+            height: 100vh;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        const START_OFFSET = { red: 0, green: 13, yellow: 26, blue: 39 }; // Starting positions for each color on the board
+
+        const SAFE_GLOBAL = [0, 8, 13, 21, 26, 34, 39, 47]; // Safe positions on the global track where tokens cannot be captured
+
+        const COLORS = ["red", "green", "yellow", "blue"]; // The four player colors in the game
+
+        // Function to build the coordinates for the Ludo board track, mapping each position to its corresponding row and column on the board
+        function buildTrackCoords() {
+            const coords = new Array(52);
+            // Standard ludo board layout, row/col 0-14
+            // Left arm (row 6..8 col 0..5), moving right along row 6 then down col 8 etc.
+            // We'll hand-place using classic Ludo King coordinate table.
+            const path = [
+                [6, 1], [6, 2], [6, 3], [6, 4], [6, 5],
+                [5, 6], [4, 6], [3, 6], [2, 6], [1, 6], [0, 6],
+                [0, 7],
+                [0, 8],
+                [1, 8], [2, 8], [3, 8], [4, 8], [5, 8],
+                [6, 9], [6, 10], [6, 11], [6, 12], [6, 13], [6, 14],
+                [7, 14],
+                [8, 14],
+                [8, 13], [8, 12], [8, 11], [8, 10], [8, 9],
+                [9, 8], [10, 8], [11, 8], [12, 8], [13, 8], [14, 8],
+                [14, 7],
+                [14, 6],
+                [13, 6], [12, 6], [11, 6], [10, 6], [9, 6],
+                [8, 5], [8, 4], [8, 3], [8, 2], [8, 1], [8, 0],
+                [7, 0],
+                [6, 0]
+            ];
+            for (let i = 0; i < 52; i++) coords[i] = path[i];
+            return coords;
+        }
+        const TRACK_COORDS = buildTrackCoords();
+
+        // Mapping of colors to their respective hex color codes for styling
+        const COLOR_HEX = {
+            red: { main: "#F0483F", dark: "#C92E28", soft: "#FFD9D3" },
+            green: { main: "#2EBD6B", dark: "#149350", soft: "#D3F5E0" },
+            yellow: { main: "#FFBB33", dark: "#E09400", soft: "#FFEBBE" },
+            blue: { main: "#2E96F0", dark: "#1573C4", soft: "#D3E9FE" },
+        };
+
+        // Component to render a colored pin(token) representing a player's token
+        function ColorGlyph({ color, size = 30 }) {
+            const hex = COLOR_HEX[color].main;
+            return (
+                <svg viewBox="0 0 100 100" width={size} height={size}>
+                    <path
+                        d="M50 8 C27 8 10 26 10 48 C10 68 35 85 50 96 C65 85 90 68 90 48 C90 26 73 8 50 8 Z"
+                        fill={hex}
+                        stroke="white"
+                        strokeWidth="6"
+                        strokeLinejoin="round"
+                    />
+                    <circle cx="50" cy="45" r="16" fill="white" opacity="0.9" />
+                </svg>
+            );
+        }
+
+        // List of available game modes
+        const MODES = [
+            { id: "2p", label: "2 Players", players: 2, sub: "Classic duel", dots: 2 },
+            { id: "3p", label: "3 Players", players: 3, sub: "Triple threat", dots: 3 },
+            { id: "4p", label: "4 Players", players: 4, sub: "Full house", dots: 4 },
+            { id: "bot", label: "Vs Bot", players: 2, sub: "You + 1 bot", dots: 2, isBot: true },
+        ];
+
+        function HomeScreen({ setScreen }) {
+            const [mode, setMode] = useState("bot");
+            const modeInfo = MODES.find(m => m.id === mode);
+            const maxPlayers = modeInfo.players;
+            const [humanColor, setHumanColor] = useState("red");
+
+            // colors assigned in order for the number of players in this mode
+            const activeColorsForCount = (n) => {
+                // Spread players around the board for visual balance
+                if (n === 2) return ["red", "yellow"];
+                if (n === 3) return ["red", "green", "yellow"];
+                return ["red", "green", "yellow", "blue"];
+            };
+
+            const availableColors = activeColorsForCount(maxPlayers);
+
+            useEffect(() => {
+                if (!availableColors.includes(humanColor)) {
+                    setHumanColor(availableColors[0]);
+                }
+                // eslint-disable-next-line
+            }, [mode]);
+
+            const handleStart = () => {
+                const colors = activeColorsForCount(maxPlayers);
+                let players;
+                if (modeInfo.isBot) {
+                    players = colors.map(c => ({
+                        color: c,
+                        isBot: c !== humanColor,
+                        name: c === humanColor ? "You" : "Bot"
+                    }));
+                } else {
+                    players = colors.map((c, i) => ({
+                        color: c,
+                        isBot: false,
+                        name: "Player " + (i + 1)
+                    }));
+                }
+                setScreen("game");
+                //onStart({ players, modeLabel: modeInfo.label });
+            };
+            return (
+                <div className="home flex flex-col items-center justify-center h-screen px-4 py-6 overflow-y-auto">
+                    <div className="w-full max-w-sm shadow-xl">
+                        <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Choose a mode</h3>
+                        <p className="text-white/70 text-xs mb-3">Pick how many are playing.</p>
+                        <div className="grid grid-cols-2 gap-3 mb-5">
+                            {MODES.map(m => (
+                                <button
+                                    key={m.id}
+                                    className={"flex flex-col items-center justify-center gap-1 rounded-xl border-2 py-3 px-2 transition " +
+                                        (mode === m.id
+                                            ? "bg-yellow-400 border-yellow-200 text-blue-900"
+                                            : "bg-blue-800 border-blue-600 text-white hover:bg-blue-700")
+                                    }
+                                    onClick={() => setMode(m.id)}
+                                >
+                                    <div className="flex gap-1 mb-1">
+                                        {Array.from({ length: m.dots }).map((_, i) => (
+                                            <span key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: i === 0 ? "var(--red)" : i === 1 ? "var(--yellow)" : i === 2 ? "var(--green)" : "var(--blue)" }} />
+                                        ))}
+                                    </div>
+                                    <span className="font-bold text-sm">{m.label}</span>
+                                    <span className="text-[10px] opacity-70">{m.sub}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Your color</h3>
+                        <p className="text-white/70 text-xs mb-3">
+                            {modeInfo.isBot ? "Choose your token color; the rest go to the bot." : "Choose your token color for this match."}
+                        </p>
+                        <div className="flex justify-center gap-3 mb-5">
+                            {["red", "green", "yellow", "blue"].map(c => {
+                                const enabled = availableColors.includes(c);
+                                return (
+                                    <button
+                                        key={c}
+                                        disabled={!enabled}
+                                        className={
+                                            "w-12 h-12 rounded-full flex items-center justify-center border-4 transition " +
+                                            (humanColor === c ? "border-yellow-300 scale-110" : "border-transparent") +
+                                            (!enabled ? " opacity-30 cursor-not-allowed" : " cursor-pointer")
+                                        }
+                                        style={{ background: COLOR_HEX[c].soft }}
+                                        onClick={() => enabled && setHumanColor(c)}
+                                        title={c}
+                                    >
+                                        <ColorGlyph color={c} />
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button className="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 border-2 border-yellow-200 text-blue-900 font-extrabold text-lg py-3 rounded-xl shadow-md hover:from-yellow-200 hover:to-yellow-400 transition" onClick={handleStart}>Start Game</button>
+
+                        <p className="text-white/60 text-[11px] mt-3 leading-snug">Roll a 6 to bring a token out of base. Land on a rival to send it home — unless they're on a star or start square. Get all 4 tokens to the center to win.</p>
+                    </div>
+                </div>
+            );
+        }
+
+        function CenterTriangle() {
+            const hex = c => COLOR_HEX[c].main;
+            return (
+                <div style={{ gridRow: "7 / span 3", gridColumn: "7 / span 3", position: "relative", pointerEvents: "none" }}>
+                    <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ overflow: "visible" }}>
+                        <g transform="translate(50,50) translate(-50,-50)">
+                            <polygon points="0,0 50,50 0,100" fill={hex("red")} />
+                            <polygon points="0,0 100,0 50,50" fill={hex("green")} />
+                            <polygon points="100,0 100,100 50,50" fill={hex("yellow")} />
+                            <polygon points="0,100 100,100 50,50" fill={hex("blue")} />
+                        </g>
+                    </svg>
+                </div>
+            );
+        }
+
+        function HomeYard({ color }) {
+            const positions = { red: [0, 0], green: [0, 9], yellow: [9, 9], blue: [9, 0] };
+            const [r0, c0] = positions[color];
+            const hex = COLOR_HEX[color];
+            return (
+                <div style={{
+                    gridRow: (r0 + 1) + " / span 6",
+                    gridColumn: (c0 + 1) + " / span 6",
+                    background: hex.main,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                }}>
+                    <div style={{
+                        width: "66%", height: "66%",
+                        background: "white",
+                        borderRadius: "14%",
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gridTemplateRows: "1fr 1fr",
+                        gap: "12%",
+                        padding: "12%",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.18)",
+                    }}>
+                        {[0, 1, 2, 3].map(i => (
+                            <div key={i} style={{
+                                background: hex.main,
+                                borderRadius: "50%",
+                                border: "3px solid white",
+                                boxShadow: `inset 0 0 0 2px ${hex.dark}`,
+                            }} />
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // Function to calculate the row and column coordinates of a token based on its color, position on the track, and index within its home yard or home column
+        function tokenCoord(color, pos, tokenIdx) {
+            if (pos === -1) {
+                const [r, c] = YARD_COORDS[color][tokenIdx];
+                return { row: r, col: c };
+            }
+            if (pos >= 51) { // home column, pos 51..56 -> index 0..5 ; pos 57 = finished(center)
+                const hc = HOME_COLS[color];
+                const idx = Math.min(pos - 51, 5);
+                const [r, c] = hc[idx];
+                return { row: r, col: c };
+            }
+            const globalIdx = (START_OFFSET[color] + pos) % 52;
+            const [r, c] = TRACK_COORDS[globalIdx];
+            return { row: r, col: c };
+        }
+
+        // Component to render a player's token on the board, positioned based on its color, index, and position in the game. It also handles click events for movable tokens.
+        function Token({ color, tokenIdx, pos, stackCount, stackOffset, movable, onClick }) {
+            const { row, col } = tokenCoord(color, pos, tokenIdx);
+            const cellSize = 100 / 15;
+            const jitter = stackCount > 1 ? (stackOffset * 6 - (stackCount - 1) * 3) : 0;
+            const style = {
+                position: "absolute",
+                left: `calc(${col * cellSize}% + ${cellSize * 0.5}% - 3.2% + ${jitter}%)`,
+                top: `calc(${row * cellSize}% + ${cellSize * 0.5}% - 3.2%)`,
+                width: "6.4%",
+                height: "6.4%",
+                background: COLOR_HEX[color].main,
+            };
+            return (
+                <div
+                    className={"token" + (movable ? " movable" : "")}
+                    style={style}
+                    onClick={movable ? onClick : undefined}
+                >
+                    <div className="token-dot" />
+                    {stackCount > 1 && stackOffset === 0 && <div className="token-stack-count">{stackCount}</div>}
+                </div>
+            );
+        }
+
+        // Component to render a star icon, used to indicate safe squares on the board
+        function StarIcon() {
+            return (
+                <svg viewBox="0 0 24 24" width="62%" height="62%" style={{ opacity: 0.85 }}>
+                    <polygon
+                        points="12,1.5 15.1,8.6 22.8,9.3 17,14.5 18.7,22.2 12,18.2 5.3,22.2 7,14.5 1.2,9.3 8.9,8.6"
+                        fill="rgba(255,255,255,0.55)"
+                        stroke="rgba(255,255,255,0.95)"
+                        strokeWidth="1.1"
+                    />
+                </svg>
+            );
+        }
+
+        function Cell({ board }) {
+            return (
+                <>
+                    {board.map((row) =>
+                        row.map((cell) => (
+                            <div
+                                key={`${cell.row}-${cell.col}`}
+                                className="cell"
+                                style={{
+                                    gridRow: cell.row + 1,
+                                    gridColumn: cell.col + 1
+                                }}
+                            />
+                        ))
+                    )}
+                </>
+            );
+
+        }
+
+        const CELL_TYPES = { EMPTY: 0, PATH: 1, SAFE: 2, HOME: 3, CENTER: 4, YARD: 5 };
+
+        const BOARD_SIZE = 15;
+        function createBoard() {
+            const board = [];
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                const currentRow = [];
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    currentRow.push({
+                        row,
+                        col,
+                        type: "empty",
+                        color: null,
+                        safe: false,
+                        arrow: null
+                    });
+
+                }
+                board.push(currentRow);
+            }
+
+            return board;
+        }
+        function Board({ tokens, movableTokenIds, onTokenClick }) {
+            const board = React.useMemo(() => createBoard(), []);
+            return (
+                <div className="board">
+                    <Cell board={board} />
+                    <HomeYard color="red" />
+                    <HomeYard color="green" />
+                    <HomeYard color="yellow" />
+                    <HomeYard color="blue" />
+                    <CenterTriangle />
+                </div>
+            );
+        }
+        function GameScreen({ setScreen }) {
+            const onExit = () => {
+                setScreen("home");
+            };
+            return (
+                <div className="game flex gap-[22px] items-start w-full justify-center flex-wrap">
+                    <div className="flex flex-col items-center gap-3.5">
+                        <div className="flex items-center justify-between w-full max-w-[600px]">
+                            <div className="flex items-center gap-2.5">
+                                <button
+                                    className="bg-white/10 text-[#FBF7EE] border border-white/20 rounded-[10px] py-2 px-3.5 text-[13px] font-semibold hover:bg-white/20"
+                                    onClick={onExit}
+                                >
+                                    ← Menu
+                                </button>
+                                <span className="text-[#FBF7EE] font-['Baloo_2'] text-xl font-bold">Ludo Rex</span>
+                            </div>
+                        </div>
+                        <div className="board-shell">
+                            <Board
+                            />
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        function App() {
+            const [screen, setScreen] = useState("home");
+            return (
+                <>
+                    <div className="app">
+                        {screen === "home" && (
+                            <HomeScreen setScreen={setScreen} />
+                        )}
+                        {screen === "game" && (
+                            <GameScreen setScreen={setScreen} />
+                        )};
+                    </div>
+                </>
+            )
+        }
+        ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ludo Game - Modular</title>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-teal-600 to-blue-900">
+<div id="root"></div>
+
+<script type="text/babel">
+
+const { useState, useEffect, useMemo } = React;
+
+/* ================================
+   🎯 GAME CONFIG
+================================ */
+const COLORS = ["red","green","yellow","blue"];
+
+const GAME_MODES = {
+  H2: { players: 2, bots: 0 },
+  H3: { players: 3, bots: 0 },
+  H4: { players: 4, bots: 0 },
+  BOT: { players: 2, bots: 1 }
+};
+
+/* ================================
+   🎲 ENGINE (CORE LOGIC ONLY)
+================================ */
+
+const Engine = {
+
+  createInitialState(mode, humanColor="red") {
+    return {
+      tokens: this.initTokens(),
+      turn: 0,
+      dice: null,
+      mode,
+      humanColor,
+      winner: null
+    };
+  },
+
+  initTokens() {
+    const obj = {};
+    COLORS.forEach(c=>{
+      obj[c] = [0,1,2,3].map(i=>({
+        id:`${c}-${i}`,
+        pos:-1
+      }));
+    });
+    return obj;
+  },
+
+  rollDice() {
+    return 1 + Math.floor(Math.random()*6);
+  },
+
+  getMovable(tokens, color, dice) {
+    // TODO: implement full rules
+    return tokens[color]
+      .map((t,i)=>i)
+      .filter(i=>true);
+  },
+
+  applyMove(state, color, index, dice) {
+    // TODO: movement logic
+    const newState = structuredClone(state);
+    newState.tokens[color][index].pos += dice;
+    return newState;
+  },
+
+  checkWin(tokens, color) {
+    // TODO win condition
+    return false;
+  },
+
+  nextTurn(state) {
+    return { ...state, turn: (state.turn + 1) % COLORS.length };
+  }
+};
+
+/* ================================
+   🎮 COMPONENTS
+================================ */
+
+/* ---------- MENU ---------- */
+function Menu({ onStart }) {
+  const [mode, setMode] = useState("H2");
+  const [color, setColor] = useState("red");
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen text-white p-4">
+
+      <h1 className="text-4xl font-bold mb-6">🎲 LUDO GAME</h1>
+
+      <div className="bg-white/10 p-6 rounded-xl w-full max-w-md">
+
+        <h2 className="mb-2 font-bold">Select Mode</h2>
+
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {Object.keys(GAME_MODES).map(m=>(
+            <button
+              key={m}
+              onClick={()=>setMode(m)}
+              className={`p-2 rounded ${
+                mode===m ? "bg-green-500" : "bg-white/20"
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+
+        <h2 className="mb-2 font-bold">Choose Color</h2>
+
+        <div className="flex gap-2 mb-6">
+          {COLORS.map(c=>(
+            <button
+              key={c}
+              onClick={()=>setColor(c)}
+              className={`w-8 h-8 rounded-full ${
+                color===c ? "ring-4 ring-white" : ""
+              }`}
+              style={{background:c}}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={()=>onStart(mode,color)}
+          className="w-full bg-yellow-400 text-black font-bold p-2 rounded"
+        >
+          Start Game
+        </button>
+
+      </div>
+    </div>
+  );
+}
+
+/* ---------- DICE ---------- */
+function Dice({ value, onRoll, disabled }) {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onRoll}
+      className="bg-white text-black px-4 py-2 rounded font-bold"
+    >
+      🎲 Roll {value ?? "?"}
+    </button>
+  );
+}
+
+/* ---------- PLAYER PANEL ---------- */
+function PlayerPanel({ state }) {
+  return (
+    <div className="text-white space-y-2">
+      {COLORS.map((c,i)=>(
+        <div key={c} className="flex justify-between bg-white/10 p-2 rounded">
+          <span>{c}</span>
+          {state.turn===i && <b>TURN</b>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- BOARD ---------- */
+function Board({ state, onTokenClick }) {
+  return (
+    <div className="grid grid-cols-15 grid-rows-15 w-[90vw] max-w-[500px] aspect-square bg-white">
+
+      {/* TODO: render grid cells */}
+
+      {COLORS.map(c=>
+        state.tokens[c].map((t,i)=>(
+          <div
+            key={t.id}
+            className="w-4 h-4 rounded-full absolute"
+            style={{background:c}}
+            onClick={()=>onTokenClick(c,i)}
+          />
+        ))
+      )}
+
+    </div>
+  );
+}
+
+/* ---------- GAME ---------- */
+function Game({ config, onExit }) {
+
+  const [state, setState] = useState(
+    Engine.createInitialState(config.mode, config.color)
+  );
+
+  const [dice, setDice] = useState(null);
+  const [movable, setMovable] = useState([]);
+
+  const currentColor = COLORS[state.turn];
+
+  /* ---- Roll ---- */
+  const roll = () => {
+    const val = Engine.rollDice();
+    setDice(val);
+
+    const moves = Engine.getMovable(state.tokens, currentColor, val);
+    setMovable(moves);
+  };
+
+  /* ---- Move ---- */
+  const moveToken = (color, index) => {
+    if(!movable.includes(index)) return;
+
+    const newState = Engine.applyMove(state, color, index, dice);
+
+    setState(newState);
+    setDice(null);
+    setMovable([]);
+
+    if(Engine.checkWin(newState.tokens,color)){
+      alert(color + " wins!");
+    } else {
+      setState(s=>Engine.nextTurn(s));
+    }
+  };
+
+  return (
+    <div className="p-4 text-white flex flex-col items-center gap-4">
+
+      <button onClick={onExit} className="bg-red-500 px-3 py-1 rounded">
+        Exit
+      </button>
+
+      <PlayerPanel state={state} />
+
+      <Board state={state} onTokenClick={moveToken} />
+
+      <Dice value={dice} onRoll={roll} disabled={false} />
+
+    </div>
+  );
+}
+
+/* ================================
+   🚀 APP ROOT
+================================ */
+
+function App() {
+  const [screen, setScreen] = useState("menu");
+  const [config, setConfig] = useState(null);
+
+  return screen==="menu" ? (
+    <Menu onStart={(mode,color)=>{
+      setConfig({mode,color});
+      setScreen("game");
+    }}/>
+  ) : (
+    <Game
+      config={config}
+      onExit={()=>setScreen("menu")}
+    />
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+
+</script>
+</body>
+</html>
