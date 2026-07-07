@@ -102,8 +102,8 @@
         .cell.safe::before {
             content: '★';
             position: absolute;
-            font-size: 60%;
-            color: rgba(43, 38, 32, 0.28);
+            font-size: 160%;
+            color: rgba(43, 38, 32, 0.38);
         }
 
         /* multi-property transitions with different durations/easings per property */
@@ -256,17 +256,30 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-        const START_OFFSET = { red: 0, green: 13, yellow: 26, blue: 39 }; // Starting positions for each color on the board
+        const START_OFFSET = { red: 39, green: 0, yellow: 13, blue: 26 }; // Starting positions for each color on the board
 
         const SAFE_GLOBAL = [0, 8, 13, 21, 26, 34, 39, 47]; // Safe positions on the global track where tokens cannot be captured
 
-        const COLORS = ["red", "green", "yellow", "blue"]; // The four player colors in the game
+        //const COLORS = ["red", "green", "yellow", "blue"]; // The four player colors in the game
+
+        const background = {
+            green: "#138808",
+            yellow: "#FFD400",
+            red: "#E53935",
+            blue: "#1E88E5"
+        };
+
+        // Mapping of each color to its respective coordinates in the home yard, where tokens start the game
+        const YARD_COORDS = {
+            green: [[1.5, 1.5], [1.5, 3.5], [3.5, 1.5], [3.5, 3.5]],
+            yellow: [[1.5, 10.5], [1.5, 12.5], [3.5, 10.5], [3.5, 12.5]],
+            red: [[10.5, 1.5], [10.5, 3.5], [12.5, 1.5], [12.5, 3.5]],
+            blue: [[10.5, 10.5], [10.5, 12.5], [12.5, 10.5], [12.5, 12.5]],
+        };
 
         // Function to build the coordinates for the Ludo board track, mapping each position to its corresponding row and column on the board
         function buildTrackCoords() {
             const coords = new Array(52);
-            // Standard ludo board layout, row/col 0-14
-            // Left arm (row 6..8 col 0..5), moving right along row 6 then down col 8 etc.
             // We'll hand-place using classic Ludo King coordinate table.
             const path = [
                 [6, 1], [6, 2], [6, 3], [6, 4], [6, 5],
@@ -293,10 +306,10 @@
 
         // Mapping of colors to their respective hex color codes for styling
         const COLOR_HEX = {
-            red: { main: "#F0483F", dark: "#C92E28", soft: "#FFD9D3" },
-            green: { main: "#2EBD6B", dark: "#149350", soft: "#D3F5E0" },
-            yellow: { main: "#FFBB33", dark: "#E09400", soft: "#FFEBBE" },
-            blue: { main: "#2E96F0", dark: "#1573C4", soft: "#D3E9FE" },
+            red: { main: "#df2d2d", dark: "#C92E28", soft: "#FFD9D3" },
+            green: { main: "#0b8b22", dark: "#149350", soft: "#D3F5E0" },
+            yellow: { main: "#ffd400", dark: "#E09400", soft: "#FFEBBE" },
+            blue: { main: "#1d88e5", dark: "#1573C4", soft: "#D3E9FE" },
         };
 
         // Component to render a colored pin(token) representing a player's token
@@ -433,10 +446,10 @@
                 <div style={{ gridRow: "7 / span 3", gridColumn: "7 / span 3", position: "relative", pointerEvents: "none" }}>
                     <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ overflow: "visible" }}>
                         <g transform="translate(50,50) translate(-50,-50)">
-                            <polygon points="0,0 50,50 0,100" fill={hex("red")} />
-                            <polygon points="0,0 100,0 50,50" fill={hex("green")} />
-                            <polygon points="100,0 100,100 50,50" fill={hex("yellow")} />
-                            <polygon points="0,100 100,100 50,50" fill={hex("blue")} />
+                            <polygon points="0,0 50,50 0,100" fill={hex("green")} />
+                            <polygon points="0,0 100,0 50,50" fill={hex("yellow")} />
+                            <polygon points="100,0 100,100 50,50" fill={hex("blue")} />
+                            <polygon points="0,100 100,100 50,50" fill={hex("red")} />
                         </g>
                     </svg>
                 </div>
@@ -444,14 +457,13 @@
         }
 
         function HomeYard({ color }) {
-            const positions = { red: [0, 0], green: [0, 9], yellow: [9, 9], blue: [9, 0] };
+            const positions = { green: [0, 0], yellow: [0, 9], red: [9, 0], blue: [9, 9] };
             const [r0, c0] = positions[color];
             const hex = COLOR_HEX[color];
             return (
                 <div style={{
                     gridRow: (r0 + 1) + " / span 6",
                     gridColumn: (c0 + 1) + " / span 6",
-                    background: hex.main,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -470,10 +482,9 @@
                     }}>
                         {[0, 1, 2, 3].map(i => (
                             <div key={i} style={{
-                                background: hex.main,
+                                background: hex.soft,
                                 borderRadius: "50%",
-                                border: "3px solid white",
-                                boxShadow: `inset 0 0 0 2px ${hex.dark}`,
+                                border: `3px solid ${hex.main}`,
                             }} />
                         ))}
                     </div>
@@ -537,27 +548,100 @@
             );
         }
 
+        function Dice({ value, isRolling, onRoll }) {
+            return (
+                <div
+                    className={"dice3d" + (isRolling ? " rolling" : " can-roll")}
+                    onClick={onRoll}
+                >
+                    {value}
+                </div>
+            );
+        }
+
+        const CELL_TYPES = {
+            EMPTY: "empty",
+            PATH: "path",
+            YARD: "yard",
+            SAFE: "safe",
+            HOME: "home",
+            CENTER: "center"
+        };
+
+        function getCellBackground(cell) {
+            switch (cell.type) {
+                case CELL_TYPES.YARD:
+                    return COLOR_HEX[cell.color].main;
+                case CELL_TYPES.PATH:
+                    return cell.color ? COLOR_HEX[cell.color].main : "#ffffff";
+                case CELL_TYPES.HOME:
+                    return COLOR_HEX[cell.color].main;
+                case CELL_TYPES.CENTER:
+                    return "#ffffff";
+                default:
+                    return "#ffffff";
+            }
+        }
+
         function Cell({ board }) {
             return (
                 <>
                     {board.map((row) =>
-                        row.map((cell) => (
-                            <div
-                                key={`${cell.row}-${cell.col}`}
-                                className="cell"
-                                style={{
-                                    gridRow: cell.row + 1,
-                                    gridColumn: cell.col + 1
-                                }}
-                            />
-                        ))
+                        row.map((cell) => {
+                            const background = getCellBackground(cell);
+                            return (
+                                <div
+                                    key={`${cell.row}-${cell.col}`}
+                                    className={"cell" + (cell.safe ? " safe" : "")}
+                                    style={{
+                                        gridRow: cell.row + 1,
+                                        gridColumn: cell.col + 1,
+                                        background: background,
+                                        border: cell.type === CELL_TYPES.PATH ? "1px solid #999" : "1px solid #d9d9d9"
+                                    }}
+                                />
+                            );
+                        })
                     )}
                 </>
             );
-
         }
 
-        const CELL_TYPES = { EMPTY: 0, PATH: 1, SAFE: 2, HOME: 3, CENTER: 4, YARD: 5 };
+        function setCell(board, row, col, data) {
+            Object.assign(board[row][col], data);
+        }
+        function fillRect(board, startRow, startCol, rows, cols, data) {
+            for (let r = startRow; r < startRow + rows; r++) {
+                for (let c = startCol; c < startCol + cols; c++) {
+                    setCell(board, r, c, data);
+                }
+            }
+        }
+
+        function buildHomeCols() {
+            const cols = { green: [], yellow: [], blue: [], red: [] };
+            cols.green.push([6, 1]);
+            for (let c = 1; c <= 5; c++) cols.green.push([7, c]);
+            cols.yellow.push([1, 8]);
+            for (let r = 1; r <= 5; r++) cols.yellow.push([r, 7]);
+            cols.blue.push([8, 13]);
+            for (let c = 13; c >= 9; c--) cols.blue.push([7, c]);
+            cols.red.push([13, 6]);
+            for (let r = 13; r >= 9; r--) cols.red.push([r, 7]);
+            return cols;
+        }
+        const HOME_COLS = buildHomeCols();
+
+        function buildCenterCoords() {
+            const coords = [];
+            for (let r = 6; r <= 8; r++) {
+                for (let c = 6; c <= 8; c++) {
+                    coords.push([r, c]);
+                }
+            }
+            return coords;
+        }
+        const CENTER_COORDS = buildCenterCoords();
 
         const BOARD_SIZE = 15;
         function createBoard() {
@@ -568,7 +652,7 @@
                     currentRow.push({
                         row,
                         col,
-                        type: "empty",
+                        type: CELL_TYPES.EMPTY,
                         color: null,
                         safe: false,
                         arrow: null
@@ -577,26 +661,154 @@
                 }
                 board.push(currentRow);
             }
+            // Paint the four home yards in their respective corners
+            fillRect(board, 0, 0, 6, 6, {
+                type: CELL_TYPES.YARD,
+                color: "green"
+            });
+            fillRect(board, 0, 9, 6, 6, {
+                type: CELL_TYPES.YARD,
+                color: "yellow"
+            });
+            fillRect(board, 9, 0, 6, 6, {
+                type: CELL_TYPES.YARD,
+                color: "red"
+            });
+            fillRect(board, 9, 9, 6, 6, {
+                type: CELL_TYPES.YARD,
+                color: "blue"
+            });
+            TRACK_COORDS.forEach(([row, col]) => {
+                setCell(board, row, col, {
+                    type: CELL_TYPES.PATH
+                });
+            });
+            // Paint home columns and entry cells — the 6 squares leading to the center for each color
+            Object.keys(HOME_COLS).forEach((color) => {
+                HOME_COLS[color].forEach(([row, col], idx) => {
+                    if (idx === 0) {
+                        // entry cell: still a track cell, just tinted with the color
+                        setCell(board, row, col, { color });
+                    } else {
+                        // actual home lane cell
+                        setCell(board, row, col, { type: CELL_TYPES.HOME, color });
+                    }
+                });
+            });
+            // Paint safe cells — positions on the global track where tokens can't be captured
+            SAFE_GLOBAL.forEach((globalIdx) => {
+                const [row, col] = TRACK_COORDS[globalIdx];
+                setCell(board, row, col, {
+                    safe: true
+                });
+            });
+
+            // Paint center — the 3x3 block where all tokens finish
+            CENTER_COORDS.forEach(([row, col]) => {
+                setCell(board, row, col, {
+                    type: CELL_TYPES.CENTER
+                });
+            });
 
             return board;
         }
+
+        function createInitialTokens(activeColors) {
+            const tokens = [];
+            activeColors.forEach(color => {
+                for (let i = 0; i < 4; i++) {
+                    tokens.push({ id: color + "-" + i, color, tokenIdx: i, pos: -1 });
+                }
+            });
+            return tokens;
+        }
+
+        function getMovableTokenIds(tokens, color, dice) {
+            const movable = [];
+            tokens.forEach(t => {
+                if (t.color !== color) return;
+                if (t.pos === -1) {
+                    if (dice === 6) movable.push(t.id); // needs a 6 to leave yard
+                    return;
+                }
+                if (t.pos === 57) return; // already finished
+                const newPos = t.pos + dice;
+                if (newPos <= 57) movable.push(t.id); // can't overshoot past home
+            });
+            return movable;
+        }
+
         function Board({ tokens, movableTokenIds, onTokenClick }) {
-            const board = React.useMemo(() => createBoard(), []);
+            const board = useMemo(() => createBoard(), []);
             return (
                 <div className="board">
                     <Cell board={board} />
-                    <HomeYard color="red" />
                     <HomeYard color="green" />
                     <HomeYard color="yellow" />
+                    <HomeYard color="red" />
                     <HomeYard color="blue" />
                     <CenterTriangle />
+                    {tokens.map(t => (
+                        <Token
+                            key={t.id}
+                            color={t.color}
+                            tokenIdx={t.tokenIdx}
+                            pos={t.pos}
+                            stackCount={1}
+                            stackOffset={0}
+                            movable={movableTokenIds.includes(t.id)}
+                            onClick={() => { onTokenClick(t.id) }}
+                        />
+                    ))}
                 </div>
             );
         }
+
         function GameScreen({ setScreen }) {
+            const ACTIVE_COLORS = ["red", "green", "yellow", "blue"];
+            const [tokens, setTokens] = useState(() => createInitialTokens(ACTIVE_COLORS));
+            const [currentTurnIdx, setCurrentTurnIdx] = useState(0);
+            const [hasRolled, setHasRolled] = useState(false);
+            const currentColor = ACTIVE_COLORS[currentTurnIdx];
+            const [diceValue, setDiceValue] = useState(1);
+            const [isRolling, setIsRolling] = useState(false);
+
             const onExit = () => {
                 setScreen("home");
             };
+
+            const handleRoll = () => {
+                if (isRolling || hasRolled) return;
+                setIsRolling(true);
+                setTimeout(() => {
+                    const roll = Math.floor(Math.random() * 6) + 1;
+                    setDiceValue(roll);
+                    setIsRolling(false);
+                    const movable = getMovableTokenIds(tokens, currentColor, roll);
+                    if (movable.length === 0) {
+                        // nothing to move — pass turn immediately unless it was a 6
+                        if (roll !== 6) {
+                            setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
+                        }
+                        setHasRolled(false);
+                    } else {
+                        setHasRolled(true);
+                    }
+                }, 550);
+            };
+
+            const handleTokenClick = (tokenId) => {
+                setTokens(prev => prev.map(t => {
+                    if (t.id !== tokenId) return t;
+                    const newPos = t.pos === -1 ? 0 : t.pos + diceValue;
+                    return { ...t, pos: newPos };
+                }));
+                setHasRolled(false);
+                if (diceValue !== 6) {
+                    setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
+                }
+            };
+
             return (
                 <div className="game flex gap-[22px] items-start w-full justify-center flex-wrap">
                     <div className="flex flex-col items-center gap-3.5">
@@ -613,8 +825,12 @@
                         </div>
                         <div className="board-shell">
                             <Board
+                                tokens={tokens}
+                                movableTokenIds={hasRolled ? getMovableTokenIds(tokens, currentColor, diceValue) : []}
+                                onTokenClick={handleTokenClick}
                             />
                         </div>
+                        <Dice value={diceValue} isRolling={isRolling} onRoll={handleRoll} />
                     </div>
                 </div>
             );
