@@ -248,6 +248,14 @@
             height: 100vh;
             opacity: 0.9;
         }
+
+        @media (max-width: 880px) {
+
+            .home,
+            .game {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 
@@ -260,7 +268,12 @@
 
         const SAFE_GLOBAL = [0, 8, 13, 21, 26, 34, 39, 47]; // Safe positions on the global track where tokens cannot be captured
 
-        //const COLORS = ["red", "green", "yellow", "blue"]; // The four player colors in the game
+        const ENTRY_ARROWS = {
+            red: [13, 6],
+            green: [6, 1],
+            yellow: [1, 8],
+            blue: [8, 13]
+        };
 
         const background = {
             green: "#138808",
@@ -337,109 +350,6 @@
             { id: "bot", label: "Vs Bot", players: 2, sub: "You + 1 bot", dots: 2, isBot: true },
         ];
 
-        function HomeScreen({ setScreen }) {
-            const [mode, setMode] = useState("bot");
-            const modeInfo = MODES.find(m => m.id === mode);
-            const maxPlayers = modeInfo.players;
-            const [humanColor, setHumanColor] = useState("red");
-
-            // colors assigned in order for the number of players in this mode
-            const activeColorsForCount = (n) => {
-                // Spread players around the board for visual balance
-                if (n === 2) return ["red", "yellow"];
-                if (n === 3) return ["red", "green", "yellow"];
-                return ["red", "green", "yellow", "blue"];
-            };
-
-            const availableColors = activeColorsForCount(maxPlayers);
-
-            useEffect(() => {
-                if (!availableColors.includes(humanColor)) {
-                    setHumanColor(availableColors[0]);
-                }
-                // eslint-disable-next-line
-            }, [mode]);
-
-            const handleStart = () => {
-                const colors = activeColorsForCount(maxPlayers);
-                let players;
-                if (modeInfo.isBot) {
-                    players = colors.map(c => ({
-                        color: c,
-                        isBot: c !== humanColor,
-                        name: c === humanColor ? "You" : "Bot"
-                    }));
-                } else {
-                    players = colors.map((c, i) => ({
-                        color: c,
-                        isBot: false,
-                        name: "Player " + (i + 1)
-                    }));
-                }
-                setScreen("game");
-                //onStart({ players, modeLabel: modeInfo.label });
-            };
-            return (
-                <div className="home flex flex-col items-center justify-center h-screen px-4 py-6 overflow-y-auto">
-                    <div className="w-full max-w-sm shadow-xl">
-                        <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Choose a mode</h3>
-                        <p className="text-white/70 text-xs mb-3">Pick how many are playing.</p>
-                        <div className="grid grid-cols-2 gap-3 mb-5">
-                            {MODES.map(m => (
-                                <button
-                                    key={m.id}
-                                    className={"flex flex-col items-center justify-center gap-1 rounded-xl border-2 py-3 px-2 transition " +
-                                        (mode === m.id
-                                            ? "bg-yellow-400 border-yellow-200 text-blue-900"
-                                            : "bg-blue-800 border-blue-600 text-white hover:bg-blue-700")
-                                    }
-                                    onClick={() => setMode(m.id)}
-                                >
-                                    <div className="flex gap-1 mb-1">
-                                        {Array.from({ length: m.dots }).map((_, i) => (
-                                            <span key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: i === 0 ? "var(--red)" : i === 1 ? "var(--yellow)" : i === 2 ? "var(--green)" : "var(--blue)" }} />
-                                        ))}
-                                    </div>
-                                    <span className="font-bold text-sm">{m.label}</span>
-                                    <span className="text-[10px] opacity-70">{m.sub}</span>
-                                </button>
-                            ))}
-                        </div>
-
-                        <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Your color</h3>
-                        <p className="text-white/70 text-xs mb-3">
-                            {modeInfo.isBot ? "Choose your token color; the rest go to the bot." : "Choose your token color for this match."}
-                        </p>
-                        <div className="flex justify-center gap-3 mb-5">
-                            {["red", "green", "yellow", "blue"].map(c => {
-                                const enabled = availableColors.includes(c);
-                                return (
-                                    <button
-                                        key={c}
-                                        disabled={!enabled}
-                                        className={
-                                            "w-12 h-12 rounded-full flex items-center justify-center border-4 transition " +
-                                            (humanColor === c ? "border-yellow-300 scale-110" : "border-transparent") +
-                                            (!enabled ? " opacity-30 cursor-not-allowed" : " cursor-pointer")
-                                        }
-                                        style={{ background: COLOR_HEX[c].soft }}
-                                        onClick={() => enabled && setHumanColor(c)}
-                                        title={c}
-                                    >
-                                        <ColorGlyph color={c} />
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <button className="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 border-2 border-yellow-200 text-blue-900 font-extrabold text-lg py-3 rounded-xl shadow-md hover:from-yellow-200 hover:to-yellow-400 transition" onClick={handleStart}>Start Game</button>
-
-                        <p className="text-white/60 text-[11px] mt-3 leading-snug">Roll a 6 to bring a token out of base. Land on a rival to send it home — unless they're on a star or start square. Get all 4 tokens to the center to win.</p>
-                    </div>
-                </div>
-            );
-        }
-
         function CenterTriangle() {
             const hex = c => COLOR_HEX[c].main;
             return (
@@ -498,9 +408,13 @@
                 const [r, c] = YARD_COORDS[color][tokenIdx];
                 return { row: r, col: c };
             }
-            if (pos >= 51) { // home column, pos 51..56 -> index 0..5 ; pos 57 = finished(center)
+            if(pos === 56) {
+                const [r, c] = CENTER_CELLS[color]
+                return {row: r, col: c};
+            }
+            if (pos >= 51) { // home column, pos 51..55 -> index 0..5 ; pos 56 = finished(center)
                 const hc = HOME_COLS[color];
-                const idx = Math.min(pos - 51, 5);
+                const idx = pos - 51;
                 const [r, c] = hc[idx];
                 return { row: r, col: c };
             }
@@ -510,14 +424,39 @@
         }
 
         // Component to render a player's token on the board, positioned based on its color, index, and position in the game. It also handles click events for movable tokens.
-        function Token({ color, tokenIdx, pos, stackCount, stackOffset, movable, onClick }) {
+        function Token({ color, tokenIdx, pos, stackCount = 1, stackOffset = 0, movable, onClick }) {
             const { row, col } = tokenCoord(color, pos, tokenIdx);
+            const STACK_OFFSETS = {
+                1: [
+                    { x: 0, y: 0 }
+                ],
+                2: [
+                    { x: -8, y: 0 },
+                    { x: 8, y: 0 }
+                ],
+                3: [
+                    { x: -8, y: -8 },
+                    { x: 8, y: -8 },
+                    { x: 0, y: 8 }
+                ],
+                4: [
+                    { x: -8, y: -8 },
+                    { x: 8, y: -8 },
+                    { x: -8, y: 8 },
+                    { x: 8, y: 8 }
+                ]
+            };
+
+            const offset = STACK_OFFSETS[Math.min(stackCount, 4)][stackOffset];
+
+            const dx = offset.x;
+            const dy = offset.y;
             const cellSize = 100 / 15;
             const jitter = stackCount > 1 ? (stackOffset * 6 - (stackCount - 1) * 3) : 0;
             const style = {
                 position: "absolute",
-                left: `calc(${col * cellSize}% + ${cellSize * 0.5}% - 3.2% + ${jitter}%)`,
-                top: `calc(${row * cellSize}% + ${cellSize * 0.5}% - 3.2%)`,
+                left: `calc(${col * cellSize}% + ${cellSize * 0.5}% - 3.2% + ${jitter}% + ${dx}px)`,
+                top: `calc(${row * cellSize}% + ${cellSize * 0.5}% - 3.2% + ${dy}px)`,
                 width: "6.4%",
                 height: "6.4%",
                 background: COLOR_HEX[color].main,
@@ -597,7 +536,7 @@
                                         gridRow: cell.row + 1,
                                         gridColumn: cell.col + 1,
                                         background: background,
-                                        border: cell.type === CELL_TYPES.PATH ? "1px solid #999" : "1px solid #d9d9d9"
+                                        border: cell.type === CELL_TYPES.PATH ? "1px solid #999" : cell.type === CELL_TYPES.YARD ? "none" : "1px solid #d9d9d9"
                                     }}
                                 />
                             );
@@ -620,13 +559,9 @@
 
         function buildHomeCols() {
             const cols = { green: [], yellow: [], blue: [], red: [] };
-            cols.green.push([6, 1]);
             for (let c = 1; c <= 5; c++) cols.green.push([7, c]);
-            cols.yellow.push([1, 8]);
             for (let r = 1; r <= 5; r++) cols.yellow.push([r, 7]);
-            cols.blue.push([8, 13]);
             for (let c = 13; c >= 9; c--) cols.blue.push([7, c]);
-            cols.red.push([13, 6]);
             for (let r = 13; r >= 9; r--) cols.red.push([r, 7]);
             return cols;
         }
@@ -642,6 +577,13 @@
             return coords;
         }
         const CENTER_COORDS = buildCenterCoords();
+
+        const CENTER_CELLS = {
+            yellow: [6.3, 7],
+            green: [7, 6.3],
+            blue: [7, 7.7],
+            red: [7.7, 7], 
+        };
 
         const BOARD_SIZE = 15;
         function createBoard() {
@@ -684,15 +626,20 @@
                 });
             });
             // Paint home columns and entry cells — the 6 squares leading to the center for each color
+            // Object.keys(HOME_COLS).forEach((color) => {
+            //     HOME_COLS[color].forEach(([row, col], idx) => {
+            //         if (idx === 0) {
+            //             // entry cell: still a track cell, just tinted with the color
+            //             setCell(board, row, col, { color });
+            //         } else {
+            //             // actual home lane cell
+            //             setCell(board, row, col, { type: CELL_TYPES.HOME, color });
+            //         }
+            //     });
+            // });
             Object.keys(HOME_COLS).forEach((color) => {
-                HOME_COLS[color].forEach(([row, col], idx) => {
-                    if (idx === 0) {
-                        // entry cell: still a track cell, just tinted with the color
-                        setCell(board, row, col, { color });
-                    } else {
-                        // actual home lane cell
-                        setCell(board, row, col, { type: CELL_TYPES.HOME, color });
-                    }
+                HOME_COLS[color].forEach(([row, col]) => {
+                    setCell(board, row, col, { type: CELL_TYPES.HOME, color });
                 });
             });
             // Paint safe cells — positions on the global track where tokens can't be captured
@@ -701,6 +648,12 @@
                 setCell(board, row, col, {
                     safe: true
                 });
+            });
+
+            // Paint entry arrows — the track cell just before each color's home column,
+            Object.keys(ENTRY_ARROWS).forEach((color) => {
+                const [row, col] = ENTRY_ARROWS[color];
+                setCell(board, row, col, { color });
             });
 
             // Paint center — the 3x3 block where all tokens finish
@@ -731,15 +684,52 @@
                     if (dice === 6) movable.push(t.id); // needs a 6 to leave yard
                     return;
                 }
-                if (t.pos === 57) return; // already finished
+                if (t.pos === 56) return; // already finished
                 const newPos = t.pos + dice;
-                if (newPos <= 57) movable.push(t.id); // can't overshoot past home
+                if (newPos <= 56) movable.push(t.id); // can't overshoot past home
             });
             return movable;
         }
 
+        function applyCapture(tokens, movedToken) {
+            if (movedToken.pos < 0 || movedToken.pos > 50) return tokens;
+            const globalIdx = (START_OFFSET[movedToken.color] + movedToken.pos) % 52;
+            const isSafe = SAFE_GLOBAL.includes(globalIdx);
+            if (isSafe) return tokens;
+            return tokens.map(t => {
+                if (t.color === movedToken.color) return t;
+                if (t.pos < 0 || t.pos > 50) return t;
+                const rivalGlobalIdx = (START_OFFSET[t.color] + t.pos) % 52;
+                if (rivalGlobalIdx === globalIdx) {
+                    return { ...t, pos: -1 };
+                }
+                return t;
+            })
+        }
+
+        function isColorFinished(tokens, color) {
+            return tokens.filter(t => t.color === color).every(t => t.pos === 56);
+        }
+
         function Board({ tokens, movableTokenIds, onTokenClick }) {
             const board = useMemo(() => createBoard(), []);
+            const tokenGroups = useMemo(() => {
+                const groups = {};
+                tokens.forEach(token => {
+                    const { row, col } = tokenCoord(
+                        token.color,
+                        token.pos,
+                        token.tokenIdx
+                    );
+                    const key = `${row}-${col}`;
+                    if (!groups[key]) {
+                        groups[key] = [];
+                    }
+                    groups[key].push(token);
+                });
+                return groups;
+            }, [tokens]);
+
             return (
                 <div className="board">
                     <Cell board={board} />
@@ -748,30 +738,33 @@
                     <HomeYard color="red" />
                     <HomeYard color="blue" />
                     <CenterTriangle />
-                    {tokens.map(t => (
-                        <Token
-                            key={t.id}
-                            color={t.color}
-                            tokenIdx={t.tokenIdx}
-                            pos={t.pos}
-                            stackCount={1}
-                            stackOffset={0}
-                            movable={movableTokenIds.includes(t.id)}
-                            onClick={() => { onTokenClick(t.id) }}
-                        />
-                    ))}
+                    {Object.values(tokenGroups).flatMap(group =>
+                        group.map((token, index) => (
+                            <Token
+                                key={token.id}
+                                color={token.color}
+                                tokenIdx={token.tokenIdx}
+                                pos={token.pos}
+                                stackCount={group.length}
+                                stackOffset={index}
+                                movable={movableTokenIds.includes(token.id)}
+                                onClick={() => onTokenClick(token.id)}
+                            />
+                        ))
+                    )}
                 </div>
             );
         }
 
-        function GameScreen({ setScreen }) {
-            const ACTIVE_COLORS = ["red", "green", "yellow", "blue"];
+        function GameScreen({ setScreen, players }) {
+            const ACTIVE_COLORS = players.map(p => p.color);
             const [tokens, setTokens] = useState(() => createInitialTokens(ACTIVE_COLORS));
             const [currentTurnIdx, setCurrentTurnIdx] = useState(0);
             const [hasRolled, setHasRolled] = useState(false);
             const currentColor = ACTIVE_COLORS[currentTurnIdx];
             const [diceValue, setDiceValue] = useState(1);
             const [isRolling, setIsRolling] = useState(false);
+            const [winner, setWinner] = useState(null);
 
             const onExit = () => {
                 setScreen("home");
@@ -798,11 +791,19 @@
             };
 
             const handleTokenClick = (tokenId) => {
-                setTokens(prev => prev.map(t => {
-                    if (t.id !== tokenId) return t;
-                    const newPos = t.pos === -1 ? 0 : t.pos + diceValue;
-                    return { ...t, pos: newPos };
-                }));
+                setTokens(prev => {
+                    const moved = prev.map(t => {
+                        if (t.id !== tokenId) return t;
+                        const newPos = t.pos === -1 ? 0 : t.pos + diceValue;
+                        return { ...t, pos: newPos };
+                    })
+                    const movedToken = moved.find(t => t.id === tokenId);
+                    const result = applyCapture(moved, movedToken);
+                    if (isColorFinished(result, movedToken.color)) {
+                        setWinner(movedToken.color);
+                    }
+                    return result;
+                });
                 setHasRolled(false);
                 if (diceValue !== 6) {
                     setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
@@ -811,6 +812,16 @@
 
             return (
                 <div className="game flex gap-[22px] items-start w-full justify-center flex-wrap">
+                    {winner && (
+                        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+                            <div className="winner-card">
+                                <h2 style={{ color: COLOR_HEX[winner].main, fontFamily: "'Baloo 2', sans-serif", fontSize: "26px", fontWeight: 800, marginBottom: "8px" }}>
+                                    {winner.charAt(0).toUpperCase() + winner.slice(1)} Wins!
+                                </h2>
+                                <button className="start-btn" onClick={onExit}>Back to Menu</button>
+                            </div>
+                        </div>
+                    )}
                     <div className="flex flex-col items-center gap-3.5">
                         <div className="flex items-center justify-between w-full max-w-[600px]">
                             <div className="flex items-center gap-2.5">
@@ -835,16 +846,122 @@
                 </div>
             );
         }
+
+        function HomeScreen({ setScreen, setPlayers }) {
+            const [mode, setMode] = useState("bot");
+            const modeInfo = MODES.find(m => m.id === mode);
+            const maxPlayers = modeInfo.players;
+            const [humanColor, setHumanColor] = useState("red");
+
+            // colors assigned in order for the number of players in this mode
+            const activeColorsForCount = (n) => {
+                // Spread players around the board for visual balance
+                if (n === 2) return ["red", "yellow"];
+                if (n === 3) return ["red", "green", "yellow"];
+                return ["red", "green", "yellow", "blue"];
+            };
+
+            const availableColors = activeColorsForCount(maxPlayers);
+
+            useEffect(() => {
+                if (!availableColors.includes(humanColor)) {
+                    setHumanColor(availableColors[0]);
+                }
+                // eslint-disable-next-line
+            }, [mode]);
+
+            const handleStart = () => {
+                const colors = activeColorsForCount(maxPlayers);
+                let players;
+                if (modeInfo.isBot) {
+                    players = colors.map(c => ({
+                        color: c,
+                        isBot: c !== humanColor,
+                        name: c === humanColor ? "You" : "Bot"
+                    }));
+                } else {
+                    players = colors.map((c, i) => ({
+                        color: c,
+                        isBot: false,
+                        name: "Player " + (i + 1)
+                    }));
+                }
+                setPlayers(players)
+                setScreen("game");
+                //onStart({ players, modeLabel: modeInfo.label });
+            };
+            return (
+                <div className="home flex flex-col items-center justify-center h-screen px-4 py-6 overflow-y-auto">
+                    <div className="w-full max-w-sm shadow-xl">
+                        <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Choose a mode</h3>
+                        <p className="text-white/70 text-xs mb-3">Pick how many are playing.</p>
+                        <div className="grid grid-cols-2 gap-3 mb-5">
+                            {MODES.map(m => (
+                                <button
+                                    key={m.id}
+                                    className={"flex flex-col items-center justify-center gap-1 rounded-xl border-2 py-3 px-2 transition " +
+                                        (mode === m.id
+                                            ? "bg-yellow-400 border-yellow-200 text-blue-900"
+                                            : "bg-blue-800 border-blue-600 text-white hover:bg-blue-700")
+                                    }
+                                    onClick={() => setMode(m.id)}
+                                >
+                                    <div className="flex gap-1 mb-1">
+                                        {Array.from({ length: m.dots }).map((_, i) => (
+                                            <span key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: i === 0 ? "var(--red)" : i === 1 ? "var(--yellow)" : i === 2 ? "var(--green)" : "var(--blue)" }} />
+                                        ))}
+                                    </div>
+                                    <span className="font-bold text-sm">{m.label}</span>
+                                    <span className="text-[10px] opacity-70">{m.sub}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Your color</h3>
+                        <p className="text-white/70 text-xs mb-3">
+                            {modeInfo.isBot ? "Choose your token color; the rest go to the bot." : "Choose your token color for this match."}
+                        </p>
+                        <div className="flex justify-center gap-3 mb-5">
+                            {["red", "green", "yellow", "blue"].map(c => {
+                                const enabled = availableColors.includes(c);
+                                return (
+                                    <button
+                                        key={c}
+                                        disabled={!enabled}
+                                        className={
+                                            "w-12 h-12 rounded-full flex items-center justify-center border-4 transition " +
+                                            (humanColor === c ? "border-yellow-300 scale-110" : "border-transparent") +
+                                            (!enabled ? " opacity-30 cursor-not-allowed" : " cursor-pointer")
+                                        }
+                                        style={{ background: COLOR_HEX[c].soft }}
+                                        onClick={() => enabled && setHumanColor(c)}
+                                        title={c}
+                                    >
+                                        <ColorGlyph color={c} />
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button className="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 border-2 border-yellow-200 text-blue-900 font-extrabold text-lg py-3 rounded-xl shadow-md hover:from-yellow-200 hover:to-yellow-400 transition" onClick={handleStart}>Start Game</button>
+
+                        <p className="text-white/60 text-[11px] mt-3 leading-snug">Roll a 6 to bring a token out of base. Land on a rival to send it home — unless they're on a star or start square. Get all 4 tokens to the center to win.</p>
+                    </div>
+                </div>
+            );
+        }
+
         function App() {
             const [screen, setScreen] = useState("home");
+            const [players, setPlayers] = useState(null)
             return (
                 <>
                     <div className="app">
                         {screen === "home" && (
-                            <HomeScreen setScreen={setScreen} />
+                            <HomeScreen setScreen={setScreen} setPlayers={setPlayers} />
                         )}
                         {screen === "game" && (
-                            <GameScreen setScreen={setScreen} />
+                            <GameScreen setScreen={setScreen} players={players} />
                         )};
                     </div>
                 </>
