@@ -30,11 +30,8 @@
 
         /* Reused surface classes (background var + shadow var repeated 3x — cleaner as a class) */
         .board-shell {
-            background: var(--cream);
-            padding: 16px;
-            border-radius: 22px;
             box-shadow: var(--shadow-lg);
-            border: 1px solid rgba(255, 255, 255, 0.35);
+            margin-top: 90px;
         }
 
         .panel-card {
@@ -84,6 +81,7 @@
             overflow: hidden;
             position: relative;
             box-shadow: inset 0 0 0 2px var(--board-line);
+            border-radius: 25px;
         }
 
         .cell {
@@ -131,22 +129,6 @@
             transform: scale(1.15);
         }
 
-        /* dice keyframes + gradient (arbitrary-value class also acceptable, kept here since reused w/ conditional states) */
-        .dice3d {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(145deg, #ffffff, #e8e0cc);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            font-size: 30px;
-            font-weight: 800;
-            user-select: none;
-            transition: transform .12s ease;
-        }
-
         .dice3d.can-roll {
             animation: diceIdle 1.8s ease-in-out infinite;
         }
@@ -155,52 +137,74 @@
             animation: diceRoll 0.55s ease-in-out;
         }
 
+        .dice-wrap {
+            perspective: 500px;
+        }
+
+        .dice-cube {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            transform-style: preserve-3d;
+        }
+
+        .dice-face {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #ffffff, #e8e0cc);
+            border-radius: 12px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dice-face.front {
+            transform: translateZ(30px);
+        }
+
+        .dice-face.back {
+            transform: rotateY(180deg) translateZ(30px);
+        }
+
+        .dice-face.right {
+            transform: rotateY(90deg) translateZ(30px);
+        }
+
+        .dice-face.left {
+            transform: rotateY(-90deg) translateZ(30px);
+        }
+
+        .dice-face.top {
+            transform: rotateX(90deg) translateZ(30px);
+        }
+
+        .dice-face.bottom {
+            transform: rotateX(-90deg) translateZ(30px);
+        }
+
         /* all keyframes */
         @keyframes tokenPulse {
-
             0%,
             100% {
                 box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 0 rgba(255, 255, 255, 0.6);
             }
-
             50% {
                 box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 6px rgba(255, 255, 255, 0);
             }
         }
 
         @keyframes diceIdle {
-
             0%,
             100% {
                 transform: translateY(0) rotate(0deg);
             }
-
             50% {
                 transform: translateY(-4px) rotate(-4deg);
             }
         }
 
-        @keyframes diceRoll {
-            0% {
-                transform: rotate(0deg) scale(1);
-            }
-
-            25% {
-                transform: rotate(90deg) scale(0.85);
-            }
-
-            50% {
-                transform: rotate(180deg) scale(1.1);
-            }
-
-            75% {
-                transform: rotate(270deg) scale(0.9);
-            }
-
-            100% {
-                transform: rotate(360deg) scale(1);
-            }
-        }
 
         /* custom breakpoints — Tailwind CDN has no config to redefine these, so keep vanilla */
         @media (max-width: 880px) {
@@ -224,29 +228,33 @@
             align-items: center;
             width: 100%;
             height: 100vh;
-            opacity: 0.9;
+            filter: brightness(1);
         }
 
-        .home {
+        .home::before,
+        .game::before {
+            content: "";
+            position: absolute;
+            inset: 0;
             background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
             background-position: center;
-            background-size: cover;
-            text-align: center;
-            overflow: hidden;
-            width: 40%;
-            height: 100vh;
-            opacity: 0.9;
+            background-size: auto;
+            filter: brightness(1.2);
+            z-index: 0;
         }
 
+        .home,
         .game {
-            background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
-            background-position: center;
-            background-size: cover;
-            text-align: center;
-            overflow: hidden;
-            width: 40%;
+            position: relative;
+            width: 30%;
             height: 100vh;
-            opacity: 0.9;
+            overflow: hidden;
+        }
+
+        .home>*,
+        .game>* {
+            position: relative;
+            z-index: 1;
         }
 
         @media (max-width: 880px) {
@@ -281,6 +289,19 @@
             red: "#E53935",
             blue: "#1E88E5"
         };
+
+        const SOUNDS = {
+            dice: new Audio("https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"),
+            move: new Audio("https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"),
+            capture: new Audio("https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"),
+            win: new Audio("https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3")
+        };
+        function playSound(name) {
+            const sound = SOUNDS[name];
+            if (!sound) return;
+            sound.currentTime = 0;
+            sound.play().catch(() => { });
+        }
 
         // Mapping of each color to its respective coordinates in the home yard, where tokens start the game
         const YARD_COORDS = {
@@ -408,9 +429,9 @@
                 const [r, c] = YARD_COORDS[color][tokenIdx];
                 return { row: r, col: c };
             }
-            if(pos === 56) {
+            if (pos === 56) {
                 const [r, c] = CENTER_CELLS[color]
-                return {row: r, col: c};
+                return { row: r, col: c };
             }
             if (pos >= 51) { // home column, pos 51..55 -> index 0..5 ; pos 56 = finished(center)
                 const hc = HOME_COLS[color];
@@ -431,34 +452,48 @@
                     { x: 0, y: 0 }
                 ],
                 2: [
-                    { x: -8, y: 0 },
-                    { x: 8, y: 0 }
+                    { x: -5, y: 0 },
+                    { x: 5, y: 0 }
                 ],
                 3: [
-                    { x: -8, y: -8 },
-                    { x: 8, y: -8 },
-                    { x: 0, y: 8 }
+                    { x: -5, y: -4 },
+                    { x: 5, y: -4 },
+                    { x: 0, y: 5 }
                 ],
                 4: [
-                    { x: -8, y: -8 },
-                    { x: 8, y: -8 },
-                    { x: -8, y: 8 },
-                    { x: 8, y: 8 }
+                    { x: -5, y: -5 },
+                    { x: 5, y: -5 },
+                    { x: -5, y: 5 },
+                    { x: 5, y: 5 }
                 ]
             };
 
             const offset = STACK_OFFSETS[Math.min(stackCount, 4)][stackOffset];
-
             const dx = offset.x;
             const dy = offset.y;
+            let tokenSize = 6.4;
+            switch (stackCount) {
+                case 2:
+                    tokenSize = 4.8;
+                    break;
+                case 3:
+                    tokenSize = 4.4;
+                    break;
+                case 4:
+                    tokenSize = 4.0;
+                    break;
+                default:
+                    tokenSize = 6.4;
+            }
+            const halfToken = tokenSize / 2;
             const cellSize = 100 / 15;
             const jitter = stackCount > 1 ? (stackOffset * 6 - (stackCount - 1) * 3) : 0;
             const style = {
                 position: "absolute",
-                left: `calc(${col * cellSize}% + ${cellSize * 0.5}% - 3.2% + ${jitter}% + ${dx}px)`,
-                top: `calc(${row * cellSize}% + ${cellSize * 0.5}% - 3.2% + ${dy}px)`,
-                width: "6.4%",
-                height: "6.4%",
+                left: `calc(${col * cellSize}% + ${cellSize * 0.5}% - ${halfToken}% + ${jitter}% + ${dx}px)`,
+                top: `calc(${row * cellSize}% + ${cellSize * 0.5}% - ${halfToken}% + ${dy}px)`,
+                width: `${tokenSize}%`,
+                height: `${tokenSize}%`,
                 background: COLOR_HEX[color].main,
             };
             return (
@@ -487,13 +522,75 @@
             );
         }
 
-        function Dice({ value, isRolling, onRoll }) {
+        const PIP_LAYOUTS = {
+            1: [[50, 50]],
+            2: [[25, 25], [75, 75]],
+            3: [[25, 25], [50, 50], [75, 75]],
+            4: [[25, 25], [75, 25], [25, 75], [75, 75]],
+            5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
+            6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]],
+        };
+
+        function DiceFace({ value }) {
+            return (
+                <svg viewBox="0 0 100 100" width="60" height="60">
+                    {PIP_LAYOUTS[value].map(([cx, cy], i) => (
+                        <circle key={i} cx={cx} cy={cy} r="9" fill="#2B2620" />
+                    ))}
+                </svg>
+            );
+        }
+
+        // Verified via rotation-matrix math: to bring a face to the viewer, rotate the cube
+        // by the inverse of that face's own placement rotation.
+        const FACE_ROTATION = {
+            1: { x: 0, y: 0 },
+            6: { x: 0, y: -180 },
+            2: { x: 0, y: -90 },
+            5: { x: 0, y: 90 },
+            3: { x: -90, y: 0 },
+            4: { x: 90, y: 0 },
+        };
+
+        let spinCounter = 0;
+        function getCubeTransform(value) {
+            spinCounter += 2; // keeps tumbling forward each roll, never rotates "backward"
+            const target = FACE_ROTATION[value];
+            const x = target.x + spinCounter * 360;
+            const y = target.y + spinCounter * 360;
+            return `rotateX(${x}deg) rotateY(${y}deg)`;
+        }
+
+        function DiceCube({ value }) {
+            const [transform, setTransform] = useState(() => getCubeTransform(value));
+            useEffect(() => {
+                setTransform(getCubeTransform(value));
+            }, [value]);
             return (
                 <div
-                    className={"dice3d" + (isRolling ? " rolling" : " can-roll")}
-                    onClick={onRoll}
+                    className="dice-cube"
+                    style={{
+                        transform,
+                        transition: "transform 0.7s cubic-bezier(.34,1.56,.64,1)",
+                    }}
                 >
-                    {value}
+                    <div className="dice-face front">  <DiceFace value={1} /> </div>
+                    <div className="dice-face back">   <DiceFace value={6} /> </div>
+                    <div className="dice-face right">  <DiceFace value={2} /> </div>
+                    <div className="dice-face left">   <DiceFace value={5} /> </div>
+                    <div className="dice-face top">    <DiceFace value={3} /> </div>
+                    <div className="dice-face bottom"> <DiceFace value={4} /> </div>
+                </div>
+            );
+        }
+
+
+        function Dice({ value, isRolling, onRoll }) {
+            return (
+                <div className="dice-wrap">
+                    <div className={"dice3d" + (isRolling ? " rolling" : " can-roll")} onClick={onRoll}>
+                        <DiceCube value={value} />
+                    </div>
                 </div>
             );
         }
@@ -582,7 +679,7 @@
             yellow: [6.3, 7],
             green: [7, 6.3],
             blue: [7, 7.7],
-            red: [7.7, 7], 
+            red: [7.7, 7],
         };
 
         const BOARD_SIZE = 15;
@@ -626,17 +723,6 @@
                 });
             });
             // Paint home columns and entry cells — the 6 squares leading to the center for each color
-            // Object.keys(HOME_COLS).forEach((color) => {
-            //     HOME_COLS[color].forEach(([row, col], idx) => {
-            //         if (idx === 0) {
-            //             // entry cell: still a track cell, just tinted with the color
-            //             setCell(board, row, col, { color });
-            //         } else {
-            //             // actual home lane cell
-            //             setCell(board, row, col, { type: CELL_TYPES.HOME, color });
-            //         }
-            //     });
-            // });
             Object.keys(HOME_COLS).forEach((color) => {
                 HOME_COLS[color].forEach(([row, col]) => {
                     setCell(board, row, col, { type: CELL_TYPES.HOME, color });
@@ -695,6 +781,12 @@
             if (movedToken.pos < 0 || movedToken.pos > 50) return tokens;
             const globalIdx = (START_OFFSET[movedToken.color] + movedToken.pos) % 52;
             const isSafe = SAFE_GLOBAL.includes(globalIdx);
+            console.log({
+                color: movedToken.color,
+                localPos: movedToken.pos,
+                globalPos: globalIdx,
+                safe: isSafe
+            });
             if (isSafe) return tokens;
             return tokens.map(t => {
                 if (t.color === movedToken.color) return t;
@@ -756,6 +848,36 @@
             );
         }
 
+        function PlayerPanel({ player, isCurrent, diceValue, isRolling, onRoll }) {
+            return (
+                <div
+                    className={`flex items-center gap-2 bg-white px-2 py-2 rounded-xl shadow-lg min-w-[150px] transition-all duration-200 ${isCurrent ? "ring-4" : ""}`}
+                    style={{
+                        "--tw-ring-color": COLOR_HEX[player.color].main
+                    }}
+                >
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100">
+                        <ColorGlyph
+                            color={player.color}
+                            size={34}
+                        />
+                    </div>
+                    <div className="flex 1">
+                        <div className="font-bold text-sm">
+                            {player.name}
+                        </div>
+                        <div className="text-[10px] text-gray-500">
+                            {isCurrent ? "Turn" : ""}
+                        </div>
+                    </div>
+                    <Dice
+                        value={diceValue}
+                        isRolling={isRolling && isCurrent}
+                        onRoll={isCurrent ? onRoll : undefined}
+                    />
+                </div>
+            );
+        }
         function GameScreen({ setScreen, players }) {
             const ACTIVE_COLORS = players.map(p => p.color);
             const [tokens, setTokens] = useState(() => createInitialTokens(ACTIVE_COLORS));
@@ -765,22 +887,73 @@
             const [diceValue, setDiceValue] = useState(1);
             const [isRolling, setIsRolling] = useState(false);
             const [winner, setWinner] = useState(null);
+            const [movingToken, setMovingToken] = useState(null);
+            const [sixCount, setSixCount] = useState(0);
+
+            function getMovePath(token, steps) {
+                const path = [];
+                let current = token.pos;
+                if (current === -1) {
+                    path.push(0);
+                    return path;
+                }
+                for (let i = 1; i <= steps; i++) {
+                    current++;
+                    if (current > 56) {
+                        break;
+                    }
+                    path.push(current);
+                }
+                return path;
+            }
+
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            async function moveToken(tokenId, path) {
+                for (const position of path) {
+                    await delay(300);
+                    setTokens(prev =>
+                        prev.map(t => {
+                            if (t.id !== tokenId)
+                                return t;
+                            return {
+                                ...t,
+                                pos: position
+                            };
+                        })
+                    );
+                }
+            }
 
             const onExit = () => {
                 setScreen("home");
             };
 
             const handleRoll = () => {
-                if (isRolling || hasRolled) return;
+                if (isRolling || hasRolled || movingToken) return;
                 setIsRolling(true);
                 setTimeout(() => {
                     const roll = Math.floor(Math.random() * 6) + 1;
                     setDiceValue(roll);
+                    playSound("dice");
                     setIsRolling(false);
+                    let newSixCount = sixCount;
+                    roll === 6 ? newSixCount++ : newSixCount = 0;
+                    if (newSixCount === 3) {
+                        alert("Three consecutive sixes! Turn skipped.");
+                        setSixCount(0);
+                        setCurrentTurnIdx(
+                            prev => (prev + 1) % ACTIVE_COLORS.length
+                        );
+                        setHasRolled(false);
+                        return;
+                    }
+                    setSixCount(newSixCount);
                     const movable = getMovableTokenIds(tokens, currentColor, roll);
                     if (movable.length === 0) {
-                        // nothing to move — pass turn immediately unless it was a 6
                         if (roll !== 6) {
+                            setSixCount(0);
                             setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
                         }
                         setHasRolled(false);
@@ -790,28 +963,33 @@
                 }, 550);
             };
 
-            const handleTokenClick = (tokenId) => {
+            const handleTokenClick = async (tokenId) => {
+                if (movingToken) return;
+                const token = tokens.find(t => t.id === tokenId);
+                if (!token) return;
+                setMovingToken(tokenId);
+                const path = getMovePath(token, token.pos === -1 ? 1 : diceValue);
+                await moveToken(tokenId, path);
+                playSound("move");
                 setTokens(prev => {
-                    const moved = prev.map(t => {
-                        if (t.id !== tokenId) return t;
-                        const newPos = t.pos === -1 ? 0 : t.pos + diceValue;
-                        return { ...t, pos: newPos };
-                    })
-                    const movedToken = moved.find(t => t.id === tokenId);
-                    const result = applyCapture(moved, movedToken);
+                    const movedToken = prev.find(t => t.id === tokenId);
+                    const result = applyCapture(prev, movedToken);
                     if (isColorFinished(result, movedToken.color)) {
                         setWinner(movedToken.color);
                     }
                     return result;
                 });
+                setMovingToken(null);
                 setHasRolled(false);
                 if (diceValue !== 6) {
-                    setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
+                    setCurrentTurnIdx(
+                        prev => (prev + 1) % ACTIVE_COLORS.length
+                    );
                 }
             };
 
             return (
-                <div className="game flex gap-[22px] items-start w-full justify-center flex-wrap">
+                <div className="game flex gap-[22px] items-start justify-center flex-wrap">
                     {winner && (
                         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
                             <div className="winner-card">
@@ -834,14 +1012,42 @@
                                 <span className="text-[#FBF7EE] font-['Baloo_2'] text-xl font-bold">Ludo Rex</span>
                             </div>
                         </div>
-                        <div className="board-shell">
-                            <Board
-                                tokens={tokens}
-                                movableTokenIds={hasRolled ? getMovableTokenIds(tokens, currentColor, diceValue) : []}
-                                onTokenClick={handleTokenClick}
-                            />
+                        <div className="relative">
+                            <div className="board-shell">
+                                <Board
+                                    tokens={tokens}
+                                    movableTokenIds={movingToken ? [] : hasRolled ? getMovableTokenIds(tokens, currentColor, diceValue) : []}
+                                    onTokenClick={handleTokenClick}
+                                />
+                            </div>
+
+                            {players.map(p => {
+                                const cornerClass = {
+                                    green: "absolute left-3",
+                                    yellow: "absolute right-3",
+                                    red: "absolute left-3",
+                                    blue: "absolute right-3",
+                                }[p.color];
+                                const cornerStyle = {
+                                    green: { top: "-10px" },
+                                    yellow: { top: "-14px" },
+                                    red: { top: "calc(100% + 20px)" },
+                                    blue: { top: "calc(100% + 20px)" },
+                                }[p.color];
+
+                                return (
+                                    <div key={p.color} className={cornerClass} style={cornerStyle}>
+                                        <PlayerPanel
+                                            player={p}
+                                            isCurrent={currentColor === p.color}
+                                            diceValue={diceValue}
+                                            isRolling={isRolling}
+                                            onRoll={handleRoll}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
-                        <Dice value={diceValue} isRolling={isRolling} onRoll={handleRoll} />
                     </div>
                 </div>
             );
