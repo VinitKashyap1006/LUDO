@@ -143,17 +143,17 @@
 
         .dice-cube {
             position: relative;
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             transform-style: preserve-3d;
         }
 
         .dice-face {
             position: absolute;
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: linear-gradient(145deg, #ffffff, #e8e0cc);
-            border-radius: 12px;
+            border-radius: 10px;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(0, 0, 0, 0.08);
             display: flex;
             align-items: center;
@@ -186,20 +186,24 @@
 
         /* all keyframes */
         @keyframes tokenPulse {
+
             0%,
             100% {
                 box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 0 rgba(255, 255, 255, 0.6);
             }
+
             50% {
                 box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 6px rgba(255, 255, 255, 0);
             }
         }
 
         @keyframes diceIdle {
+
             0%,
             100% {
                 transform: translateY(0) rotate(0deg);
             }
+
             50% {
                 transform: translateY(-4px) rotate(-4deg);
             }
@@ -239,14 +243,14 @@
             background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
             background-position: center;
             background-size: auto;
-            filter: brightness(1.2);
+            filter: brightness(1.5);
             z-index: 0;
         }
 
         .home,
         .game {
             position: relative;
-            width: 30%;
+            width: 576px;
             height: 100vh;
             overflow: hidden;
         }
@@ -257,7 +261,7 @@
             z-index: 1;
         }
 
-        @media (max-width: 880px) {
+        @media (max-width: 576px) {
 
             .home,
             .game {
@@ -291,12 +295,20 @@
         };
 
         const SOUNDS = {
-            dice: new Audio("https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"),
-            move: new Audio("https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"),
-            capture: new Audio("https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"),
+            dice: new Audio("https://cdn.freesound.org/previews/736/736744_15933495-lq.mp3"),
+            move: new Audio("https://cdn.freesound.org/previews/464/464909_4284968-lq.mp3"),
+            capture: new Audio("https://cdn.freesound.org/previews/855/855914_15895934-lq.mp3"),
+            pass: new Audio("https://cdn.freesound.org/previews/844/844146_10594370-lq.mp3"),
             win: new Audio("https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3")
         };
+
+        let soundEnabled = true;
+        function setSoundEnabled(value) {
+            soundEnabled = value;
+        }
+
         function playSound(name) {
+            if (!soundEnabled) return;
             const sound = SOUNDS[name];
             if (!sound) return;
             sound.currentTime = 0;
@@ -533,7 +545,7 @@
 
         function DiceFace({ value }) {
             return (
-                <svg viewBox="0 0 100 100" width="60" height="60">
+                <svg viewBox="0 0 100 100" width="50" height="50">
                     {PIP_LAYOUTS[value].map(([cx, cy], i) => (
                         <circle key={i} cx={cx} cy={cy} r="9" fill="#2B2620" />
                     ))}
@@ -552,20 +564,20 @@
             4: { x: 90, y: 0 },
         };
 
-        let spinCounter = 0;
-        function getCubeTransform(value) {
-            spinCounter += 2; // keeps tumbling forward each roll, never rotates "backward"
-            const target = FACE_ROTATION[value];
-            const x = target.x + spinCounter * 360;
-            const y = target.y + spinCounter * 360;
-            return `rotateX(${x}deg) rotateY(${y}deg)`;
-        }
-
-        function DiceCube({ value }) {
-            const [transform, setTransform] = useState(() => getCubeTransform(value));
+        function DiceCube({ value, rollId }) {
+            const spinRef = useRef(0);
+            const computeTransform = (v) => {
+                spinRef.current += 2;
+                const target = FACE_ROTATION[v];
+                const x = target.x + spinRef.current * 360;
+                const y = target.y + spinRef.current * 360;
+                return `rotateX(${x}deg) rotateY(${y}deg)`;
+            };
+            const [transform, setTransform] = useState(() => computeTransform(value));
             useEffect(() => {
-                setTransform(getCubeTransform(value));
-            }, [value]);
+                setTransform(computeTransform(value));
+            }, [rollId]);
+
             return (
                 <div
                     className="dice-cube"
@@ -585,11 +597,11 @@
         }
 
 
-        function Dice({ value, isRolling, onRoll }) {
+        function Dice({ value, rollId, isRolling, onRoll }) {
             return (
                 <div className="dice-wrap">
                     <div className={"dice3d" + (isRolling ? " rolling" : " can-roll")} onClick={onRoll}>
-                        <DiceCube value={value} />
+                        <DiceCube value={value} rollId={rollId} />
                     </div>
                 </div>
             );
@@ -778,25 +790,22 @@
         }
 
         function applyCapture(tokens, movedToken) {
-            if (movedToken.pos < 0 || movedToken.pos > 50) return tokens;
+            if (movedToken.pos < 0 || movedToken.pos > 50) return { tokens, captured: false };
             const globalIdx = (START_OFFSET[movedToken.color] + movedToken.pos) % 52;
             const isSafe = SAFE_GLOBAL.includes(globalIdx);
-            console.log({
-                color: movedToken.color,
-                localPos: movedToken.pos,
-                globalPos: globalIdx,
-                safe: isSafe
-            });
-            if (isSafe) return tokens;
-            return tokens.map(t => {
+            if (isSafe) return { tokens, captured: false };
+            let captured = false;
+            const result = tokens.map(t => {
                 if (t.color === movedToken.color) return t;
                 if (t.pos < 0 || t.pos > 50) return t;
                 const rivalGlobalIdx = (START_OFFSET[t.color] + t.pos) % 52;
                 if (rivalGlobalIdx === globalIdx) {
+                    captured = true;
                     return { ...t, pos: -1 };
                 }
                 return t;
-            })
+            });
+            return { tokens: result, captured };
         }
 
         function isColorFinished(tokens, color) {
@@ -848,15 +857,15 @@
             );
         }
 
-        function PlayerPanel({ player, isCurrent, diceValue, isRolling, onRoll }) {
+        function PlayerPanel({ player, isCurrent, diceState, onRoll }) {
             return (
                 <div
-                    className={`flex items-center gap-2 bg-white px-2 py-2 rounded-xl shadow-lg min-w-[150px] transition-all duration-200 ${isCurrent ? "ring-4" : ""}`}
+                    className={`flex items-center gap-1.5 bg-white px-1.5 py-1.5 rounded-lg shadow-lg min-w-[110px] transition-all duration-200 ${isCurrent ? "ring-2" : ""}`}
                     style={{
                         "--tw-ring-color": COLOR_HEX[player.color].main
                     }}
                 >
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
                         <ColorGlyph
                             color={player.color}
                             size={34}
@@ -871,8 +880,9 @@
                         </div>
                     </div>
                     <Dice
-                        value={diceValue}
-                        isRolling={isRolling && isCurrent}
+                        value={diceState[player.color].value}
+                        rollId={diceState[player.color].rollId}
+                        isRolling={diceState[player.color].rolling}
                         onRoll={isCurrent ? onRoll : undefined}
                     />
                 </div>
@@ -884,11 +894,26 @@
             const [currentTurnIdx, setCurrentTurnIdx] = useState(0);
             const [hasRolled, setHasRolled] = useState(false);
             const currentColor = ACTIVE_COLORS[currentTurnIdx];
-            const [diceValue, setDiceValue] = useState(1);
-            const [isRolling, setIsRolling] = useState(false);
+            const [diceState, setDiceState] = useState(
+                ACTIVE_COLORS.reduce((obj, color) => {
+                    obj[color] = {
+                        value: 1,
+                        rolling: false,
+                        rollId: 0
+                    };
+                    return obj;
+                }, {})
+            );
             const [winner, setWinner] = useState(null);
             const [movingToken, setMovingToken] = useState(null);
             const [sixCount, setSixCount] = useState(0);
+            const [soundOn, setSoundOn] = useState(true);
+
+            const toggleSound = () => {
+                const next = !soundOn;
+                setSoundOn(next);
+                setSoundEnabled(next);
+            };
 
             function getMovePath(token, steps) {
                 const path = [];
@@ -923,6 +948,8 @@
                             };
                         })
                     );
+                    playSound("move");
+                    if (position === 56) playSound("pass");
                 }
             }
 
@@ -931,13 +958,18 @@
             };
 
             const handleRoll = () => {
-                if (isRolling || hasRolled || movingToken) return;
-                setIsRolling(true);
+                if (diceState[currentColor].rolling || hasRolled || movingToken) return;
+                setDiceState(prev => ({
+                    ...prev,
+                    [currentColor]: { ...prev[currentColor], rolling: true }
+                }));
                 setTimeout(() => {
                     const roll = Math.floor(Math.random() * 6) + 1;
-                    setDiceValue(roll);
+                    setDiceState(prev => ({
+                        ...prev,
+                        [currentColor]: { value: roll, rolling: false, rollId: prev[currentColor].rollId + 1 }
+                    }));
                     playSound("dice");
-                    setIsRolling(false);
                     let newSixCount = sixCount;
                     roll === 6 ? newSixCount++ : newSixCount = 0;
                     if (newSixCount === 3) {
@@ -968,20 +1000,21 @@
                 const token = tokens.find(t => t.id === tokenId);
                 if (!token) return;
                 setMovingToken(tokenId);
-                const path = getMovePath(token, token.pos === -1 ? 1 : diceValue);
+                const path = getMovePath(token, token.pos === -1 ? 1 : diceState[currentColor].value);
                 await moveToken(tokenId, path);
-                playSound("move");
                 setTokens(prev => {
                     const movedToken = prev.find(t => t.id === tokenId);
-                    const result = applyCapture(prev, movedToken);
+                    const { tokens: result, captured } = applyCapture(prev, movedToken);
+                    if (captured) playSound("capture");
                     if (isColorFinished(result, movedToken.color)) {
                         setWinner(movedToken.color);
+                        playSound("win");
                     }
                     return result;
                 });
                 setMovingToken(null);
                 setHasRolled(false);
-                if (diceValue !== 6) {
+                if (diceState[currentColor].value !== 6) {
                     setCurrentTurnIdx(
                         prev => (prev + 1) % ACTIVE_COLORS.length
                     );
@@ -1012,27 +1045,33 @@
                                 <span className="text-[#FBF7EE] font-['Baloo_2'] text-xl font-bold">Ludo Rex</span>
                             </div>
                         </div>
+                        <button
+                            onClick={toggleSound}
+                            className="absolute top-1 right-4 z-40 bg-white/10 text-[#FBF7EE] border border-white/20 rounded-[10px] py-2 px-3.5 text-[13px] font-semibold hover:bg-white/20"
+                        >
+                            {soundOn ? "🔊" : "🔇"}
+                        </button>
                         <div className="relative">
                             <div className="board-shell">
                                 <Board
                                     tokens={tokens}
-                                    movableTokenIds={movingToken ? [] : hasRolled ? getMovableTokenIds(tokens, currentColor, diceValue) : []}
+                                    movableTokenIds={movingToken ? [] : hasRolled ? getMovableTokenIds(tokens, currentColor, diceState[currentColor].value) : []}
                                     onTokenClick={handleTokenClick}
                                 />
                             </div>
 
                             {players.map(p => {
                                 const cornerClass = {
-                                    green: "absolute left-3",
-                                    yellow: "absolute right-3",
-                                    red: "absolute left-3",
-                                    blue: "absolute right-3",
+                                    green: "absolute left-2",
+                                    yellow: "absolute right-2",
+                                    red: "absolute left-2",
+                                    blue: "absolute right-2",
                                 }[p.color];
                                 const cornerStyle = {
-                                    green: { top: "-10px" },
-                                    yellow: { top: "-14px" },
-                                    red: { top: "calc(100% + 20px)" },
-                                    blue: { top: "calc(100% + 20px)" },
+                                    green: { top: "15px" },
+                                    yellow: { top: "15px" },
+                                    red: { top: "calc(100% + 15px)" },
+                                    blue: { top: "calc(100% + 15px)" },
                                 }[p.color];
 
                                 return (
@@ -1040,8 +1079,7 @@
                                         <PlayerPanel
                                             player={p}
                                             isCurrent={currentColor === p.color}
-                                            diceValue={diceValue}
-                                            isRolling={isRolling}
+                                            diceState={diceState}
                                             onRoll={handleRoll}
                                         />
                                     </div>
