@@ -13,6 +13,17 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- i18n Scripts for language translation -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        //const apiBaseUrl = params.get("apiBaseUrl");
+        const apiBaseUrl = "http://localhost:7877";
+    </script>
     <style>
         /* CSS variables — must stay vanilla, Tailwind CDN has no config to define these */
         :root {
@@ -49,24 +60,6 @@
             text-align: center;
             box-shadow: var(--shadow-lg);
             max-width: 380px;
-        }
-
-        .start-btn {
-            background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-dark) 100%);
-            color: #3a2600;
-            border: none;
-            font-family: 'Baloo 2', sans-serif;
-            font-weight: 700;
-            font-size: 15px;
-            padding: 11px 28px;
-            border-radius: 13px;
-            box-shadow: 0 5px 0 #9c6c10, var(--shadow-sm);
-            transition: transform .1s ease, box-shadow .1s ease;
-        }
-
-        .start-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 1px 0 #9c6c10;
         }
 
         /* 15x15 board grid — dense/specific, not worth converting */
@@ -222,9 +215,9 @@
         }
 
         .app {
-            background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
+            background-image: url("ludo_bg.png");
             background-position: center;
-            background-size: contain;
+            background-size: cover;
             text-align: center;
             overflow: hidden;
             display: flex;
@@ -232,7 +225,7 @@
             align-items: center;
             width: 100%;
             min-height: 100vh;
-            filter: brightness(1);
+            opacity: 0.8;
         }
 
         .home::before,
@@ -240,17 +233,182 @@
             content: "";
             position: absolute;
             inset: 0;
-            background-image: url("https://ludoking.com/play/lk_h5_bg.jpg");
             background-position: center;
             background-size: auto;
-            filter: brightness(1.5);
             z-index: 0;
         }
 
-        .home,
+        .home {
+            position: relative;
+            width: 580px;
+            min-height: 100vh;
+            margin: auto;
+            padding: 35px 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(180deg, #a690db, #241542, #7a5cd3);
+            box-shadow:
+                0 0 80px rgba(0, 0, 0, .6),
+                inset 0 0 120px rgba(255, 255, 255, .03);
+            overflow: hidden;
+        }
+
+        .title-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 12px;
+        }
+
+        .home-title {
+            font-size: 52px;
+            /* Smaller */
+            font-weight: 900;
+            color: #214994;
+            letter-spacing: 2px;
+            white-space: nowrap;
+            /* Always stays on one line */
+            text-shadow:
+                0 0 8px #ffffff,
+                0 0 18px #9c7cff,
+                0 0 35px #7d5cff;
+        }
+
+        .dice-icon {
+            font-size: 46px;
+            filter: drop-shadow(0 0 12px #8d6cff);
+        }
+
+        .home-subtitle {
+            color: #ddd;
+            font-size: 26px;
+            margin-top: 10px;
+
+        }
+
+        .section-title {
+            color: #42d8ff;
+            font-size: 34px;
+            font-weight: 800;
+            margin-top: 40px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 18px #3fd6ff;
+        }
+
+        .player-mini {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-card {
+            height: 120px;
+            border-radius: 22px;
+            background: #241843;
+            border: 2px solid #7756ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(126, 92, 255, .45);
+            transition: .25s;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 35px #8d71ff;
+        }
+
+        .mode-card.active {
+            border-color: #6adfff;
+            box-shadow: 0 0 25px #54dbff;
+        }
+
+        .color-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 4px solid transparent;
+            transition: .25s;
+            box-shadow: 0 0 18px rgba(255, 255, 255, .2);
+        }
+
+        .color-circle.active {
+            transform: scale(1.08);
+            border-color: white;
+            box-shadow: 0 0 25px currentColor;
+        }
+
+        .start-btn {
+            background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-dark) 100%);
+            color: #3a2600;
+            border: none;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 11px 28px;
+            border-radius: 13px;
+            box-shadow: 0 5px 0 #9c6c10, var(--shadow-sm);
+            transition: transform .1s ease, box-shadow .1s ease;
+        }
+
+        .start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #9c6c10;
+        }
+
+
+        .start-btn {
+            height: 92px;
+            border-radius: 60px;
+            font-size: 54px;
+            font-weight: 900;
+            color: white;
+            border: none;
+            background:
+                linear-gradient(90deg,
+                    #35b6ff,
+                    #8134ff);
+            box-shadow:
+                0 0 35px rgba(128, 73, 255, .8);
+            transition: .25s;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.02);
+            box-shadow:
+                0 0 45px #8b56ff;
+        }
+
+        .home-note {
+            margin-top: 35px;
+            font-size: 18px;
+            color: #cfcfcf;
+            line-height: 1.8;
+            opacity: .8;
+            text-align: center;
+        }
+
+        .home-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
         .game {
             position: relative;
-            width: 576px;
+            width: 580px;
             min-height: 100vh;
             overflow: hidden;
         }
@@ -268,6 +426,136 @@
                 width: 100%;
             }
         }
+
+        .map-outer {
+            width: 100%;
+            max-width: 567px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #10203f;
+        }
+
+        .map-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            scrollbar-width: thin;
+        }
+
+        .map-header {
+            padding: 14px 16px 16px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+            position: relative;
+            z-index: 5;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            font-size: 19px;
+        }
+
+        .pill {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #fff;
+            padding: 6px 12px;
+            border-radius: 24px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
+            font-weight: 900;
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 15px;
+        }
+
+        .avatar-ring {
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: #fff;
+            border: 3.5px solid rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+            font-size: 28px;
+        }
+
+        .map-title {
+            font-family: 'Baloo 2', sans-serif;
+            color: #fff;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: .5px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .node-cookie {
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4.5px solid rgba(255, 255, 255, 0.92);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18), inset 0 -4px 6px rgba(0, 0, 0, 0.12);
+        }
+
+        .node-locked {
+            border-radius: 50%;
+            background: #7b7691;
+            border: 4.5px solid rgba(255, 255, 255, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.9;
+        }
+
+        .go-badge {
+            padding: 6px 20px;
+            border-radius: 18px;
+            margin-bottom: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'Baloo 2', sans-serif;
+            color: #fff;
+            font-weight: 900;
+            font-size: 14px;
+            letter-spacing: 1.5px;
+            animation: goBounce 1s ease-in-out infinite;
+        }
+
+        .pin-outer {
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3.5px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            animation: pinPop .3s ease-out;
+        }
+
+        .pin-avatar-ring {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            font-size: 26px;
+        }
     </style>
 </head>
 
@@ -275,6 +563,67 @@
     <div id="root"></div>
     <script type="text/babel">
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
+        const token = localStorage.getItem("token");
+        const api = axios.create({
+            baseURL: apiBaseUrl + "/api",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const offerId = 80;
+        function getVisitorId() {
+            const match = document.cookie.match(/(^| )visitorId=([^;]+)/);
+            return match ? match[2] : null;
+        }
+        // ==================== TRANSLATIONS ====================
+        async function initI18n() {
+            const lang = localStorage.getItem("appLanguage") || navigator.language || "en";
+            const supportedLanguages = [
+                "en", "hi", "ta", "zh-TW", "de", "fr", "it", "nl", "zh", "ko",
+                "ru", "ja", "es", "id", "fi", "hu", "ms", "th", "en-GB", "el",
+                "bn", "ar", "cs", "uk", "sv", "pl", "ro", "sk", "tr", "vi",
+                "zh-CN", "pt-BR", "mx", "da", "no", "lv", "hr"
+            ];
+
+            const language = supportedLanguages.includes(lang) ? lang : "en";
+            const translations = await fetch(`/locales/${language}.json`)
+                .then(res => res.json());
+            await i18next
+                .use(i18nextBrowserLanguageDetector)
+                .init({
+                    lng: language,
+                    fallbackLng: "en",
+                    resources: {
+                        [language]: {
+                            translation: translations,
+                        },
+                    },
+                    interpolation: {
+                        escapeValue: false,
+                    },
+                });
+        }
+        initI18n();
+        // Custom hook for translations
+        const useTranslation = () => {
+            const [t, setT] = useState(() => (key, options) => {
+                return i18next.t(`Game_CrossWord.${key}`, options);
+            });
+            const [currentLang, setCurrentLang] = useState(i18next.language);
+            useEffect(() => {
+                const updateTranslation = () => {
+                    setT(() => (key, options) =>
+                        i18next.t(`Game_CrossWord.${key}`, options)
+                    );
+                    setCurrentLang(i18next.language);
+                };
+                i18next.on("languageChanged", updateTranslation);
+                return () =>
+                    i18next.off("languageChanged", updateTranslation);
+            }, []);
+            return { t, currentLang };
+        };
 
         const START_OFFSET = { red: 39, green: 0, yellow: 13, blue: 26 };
         const SAFE_GLOBAL = [0, 8, 13, 21, 26, 34, 39, 47];
@@ -877,39 +1226,320 @@
             );
         }
 
-        function chooseBotMove(tokens, color, dice) {
-            const movable = getMovableTokenIds(tokens, color, dice);
-            if (movable.length === 0) return null;
-            if (movable.length === 1) return movable[0];
+        // function chooseBotMove(tokens, color, dice) {
+        //     const movable = getMovableTokenIds(tokens, color, dice);
+        //     if (movable.length === 0) return null;
+        //     if (movable.length === 1) return movable[0];
 
-            const withResult = movable.map(id => {
-                const token = tokens.find(t => t.id === id);
-                const newPos = token.pos === -1 ? 0 : token.pos + dice;
-                return { id, token, newPos };
+        //     const withResult = movable.map(id => {
+        //         const token = tokens.find(t => t.id === id);
+        //         const newPos = token.pos === -1 ? 0 : token.pos + dice;
+        //         return { id, token, newPos };
+        //     });
+
+        //     // 1. Prefer a capture
+        //     const captureMove = withResult.find(({ newPos }) => {
+        //         if (newPos < 0 || newPos > 50) return false;
+        //         const globalIdx = (START_OFFSET[color] + newPos) % 52;
+        //         if (SAFE_GLOBAL.includes(globalIdx)) return false;
+        //         return tokens.some(t =>
+        //             t.color !== color &&
+        //             t.pos >= 0 && t.pos <= 50 &&
+        //             (START_OFFSET[t.color] + t.pos) % 52 === globalIdx
+        //         );
+        //     });
+        //     if (captureMove) return captureMove.id;
+
+        //     // 2. Prefer finishing a token
+        //     const finishMove = withResult.find(({ newPos }) => newPos === 56);
+        //     if (finishMove) return finishMove.id;
+
+        //     // 3. Prefer moving the furthest-along token
+        //     const sorted = [...withResult].sort((a, b) => b.token.pos - a.token.pos);
+        //     return sorted[0].id;
+        // }
+
+        function describeMoves(tokens, color, dice) {
+            const movableIds = getMovableTokenIds(tokens, color, dice);
+            return movableIds.map(id => {
+                const t = tokens.find(tok => tok.id === id);
+                const newPos = t.pos === -1 ? 0 : t.pos + dice;
+                let globalIdx = null;
+                let isSafeSquare = false;
+                let capturesRival = false;
+                let entersHomeColumn = false;
+                let finishesToken = false;
+                let leavesYard = t.pos === -1;
+
+                if (newPos <= 50) {
+                    globalIdx = (START_OFFSET[color] + newPos) % 52;
+                    isSafeSquare = SAFE_GLOBAL.includes(globalIdx);
+                    capturesRival = tokens.some(rival =>
+                        rival.color !== color &&
+                        rival.pos >= 0 && rival.pos <= 50 &&
+                        (START_OFFSET[rival.color] + rival.pos) % 52 === globalIdx
+                    );
+                } else if (newPos < 56) {
+                    entersHomeColumn = true;
+                } else if (newPos === 56) {
+                    finishesToken = true;
+                }
+                let inDanger = false;
+                if (t.pos >= 0 && t.pos <= 50) {
+                    const myGlobal = (START_OFFSET[color] + t.pos) % 52;
+                    if (!SAFE_GLOBAL.includes(myGlobal)) {
+                        inDanger = tokens.some(rival => {
+                            if (rival.color === color) return false;
+                            if (rival.pos < 0 || rival.pos > 50) return false;
+                            const rivalGlobal = (START_OFFSET[rival.color] + rival.pos) % 52;
+                            for (let step = 1; step <= 6; step++) {
+                                if ((rivalGlobal + step) % 52 === myGlobal) return true;
+                            }
+                            return false;
+                        });
+                    }
+                }
+                return { id, token: t, newPos, isSafeSquare, capturesRival, entersHomeColumn, finishesToken, leavesYard, inDanger };
             });
+        }
+        function pickRandom(moves) {
+            return moves[Math.floor(Math.random() * moves.length)].id;
+        }
 
-            // 1. Prefer a capture
-            const captureMove = withResult.find(({ newPos }) => {
-                if (newPos < 0 || newPos > 50) return false;
-                const globalIdx = (START_OFFSET[color] + newPos) % 52;
-                if (SAFE_GLOBAL.includes(globalIdx)) return false;
-                return tokens.some(t =>
-                    t.color !== color &&
-                    t.pos >= 0 && t.pos <= 50 &&
-                    (START_OFFSET[t.color] + t.pos) % 52 === globalIdx
-                );
-            });
-            if (captureMove) return captureMove.id;
+        // WARM UP: pure chance — a brand-new player fumbling the dice.
+        function warmUpMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            return pickRandom(moves);
+        }
+        // BEGINNER: mostly random, but takes a free capture when it falls
+        // straight into its lap.
+        function beginnerMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            const capture = moves.find(m => m.capturesRival);
+            if (capture && Math.random() < 0.6) return capture.id;
+            return pickRandom(moves);
+        }
 
-            // 2. Prefer finishing a token
-            const finishMove = withResult.find(({ newPos }) => newPos === 56);
-            if (finishMove) return finishMove.id;
-
-            // 3. Prefer moving the furthest-along token
-            const sorted = [...withResult].sort((a, b) => b.token.pos - a.token.pos);
+        // EASY: always takes captures and finishes, otherwise random.
+        function easyMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            const capture = moves.find(m => m.capturesRival);
+            if (capture) return capture.id;
+            const finish = moves.find(m => m.finishesToken);
+            if (finish) return finish.id;
+            return pickRandom(moves);
+        }
+        // MEDIUM: captures > finishing > escaping danger > leaving the yard,
+        // else moves the furthest-advanced token.
+        function mediumMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            const capture = moves.find(m => m.capturesRival);
+            if (capture) return capture.id;
+            const finish = moves.find(m => m.finishesToken);
+            if (finish) return finish.id;
+            const escape = moves.find(m => m.inDanger);
+            if (escape) return escape.id;
+            const leave = moves.find(m => m.leavesYard);
+            if (leave && dice === 6) return leave.id;
+            const sorted = [...moves].sort((a, b) => b.token.pos - a.token.pos);
+            return sorted[0].id;
+        }
+        // HARD: adds preference for safe squares and home-column entry,
+        // and avoids moving INTO danger when a safer option exists.
+        function hardMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            const capture = moves.find(m => m.capturesRival);
+            if (capture) return capture.id;
+            const finish = moves.find(m => m.finishesToken);
+            if (finish) return finish.id;
+            const escape = moves.find(m => m.inDanger);
+            if (escape) return escape.id;
+            const safeMove = moves.find(m => m.isSafeSquare && !m.leavesYard);
+            const homeEntry = moves.find(m => m.entersHomeColumn);
+            if (homeEntry) return homeEntry.id;
+            if (safeMove) return safeMove.id;
+            const leave = moves.find(m => m.leavesYard);
+            if (leave && dice === 6) return leave.id;
+            const willBeSafeFromChase = moves.filter(m => !wouldBeInDanger(tokens, color, m.newPos));
+            const pool = willBeSafeFromChase.length > 0 ? willBeSafeFromChase : moves;
+            const sorted = [...pool].sort((a, b) => b.token.pos - a.token.pos);
             return sorted[0].id;
         }
 
+        function wouldBeInDanger(tokens, color, newPos) {
+            if (newPos < 0 || newPos > 50) return false;
+            const myGlobal = (START_OFFSET[color] + newPos) % 52;
+            if (SAFE_GLOBAL.includes(myGlobal)) return false;
+            return tokens.some(rival => {
+                if (rival.color === color) return false;
+                if (rival.pos < 0 || rival.pos > 50) return false;
+                const rivalGlobal = (START_OFFSET[rival.color] + rival.pos) % 52;
+                for (let step = 1; step <= 6; step++) {
+                    if ((rivalGlobal + step) % 52 === myGlobal) return true;
+                }
+                return false;
+            });
+        }
+
+        // EXPERT: hard's rules, but prioritizes bringing new tokens out
+        // earlier and values capturing more tokens further from home (bigger
+        // tempo swing) over the single furthest-advanced heuristic.
+        function expertMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            const captures = moves.filter(m => m.capturesRival);
+            if (captures.length > 0) {
+                const rivalProgress = (m) => {
+                    const globalIdx = (START_OFFSET[color] + m.newPos) % 52;
+                    const rival = tokens.find(r => r.color !== color && r.pos >= 0 && r.pos <= 50 &&
+                        (START_OFFSET[r.color] + r.pos) % 52 === globalIdx);
+                    return rival ? rival.pos : 0;
+                };
+                captures.sort((a, b) => rivalProgress(b) - rivalProgress(a));
+                return captures[0].id;
+            }
+            const finish = moves.find(m => m.finishesToken);
+            if (finish) return finish.id;
+            const escape = moves.find(m => m.inDanger);
+            if (escape) return escape.id;
+            const leave = moves.find(m => m.leavesYard);
+            const tokensOnBoard = tokens.filter(t => t.color === color && t.pos >= 0 && t.pos <= 50).length;
+            if (leave && dice === 6 && tokensOnBoard < 2) return leave.id;
+            const homeEntry = moves.find(m => m.entersHomeColumn);
+            if (homeEntry) return homeEntry.id;
+            const safeMove = moves.find(m => m.isSafeSquare && !m.leavesYard);
+            if (safeMove) return safeMove.id;
+            const willBeSafeFromChase = moves.filter(m => !wouldBeInDanger(tokens, color, m.newPos) && !m.leavesYard);
+            const pool = willBeSafeFromChase.length > 0 ? willBeSafeFromChase : moves;
+            const sorted = [...pool].sort((a, b) => b.token.pos - a.token.pos);
+            return sorted[0].id;
+        }
+        // MASTER: expert's judgement, plus it looks one ply further — it
+        // will not walk a token into a square from which it can be captured
+        // even by chaining two rival dice possibilities isn't needed here
+        // (single-die game), but it does avoid clustering tokens unsafely
+        // and holds back the last yard token if the board is already risky.
+        function masterMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            const captures = moves.filter(m => m.capturesRival);
+            if (captures.length > 0) {
+                const rivalProgress = (m) => {
+                    const globalIdx = (START_OFFSET[color] + m.newPos) % 52;
+                    const rival = tokens.find(r => r.color !== color && r.pos >= 0 && r.pos <= 50 &&
+                        (START_OFFSET[r.color] + r.pos) % 52 === globalIdx);
+                    return rival ? rival.pos : 0;
+                };
+                captures.sort((a, b) => rivalProgress(b) - rivalProgress(a));
+                const safestCapture = captures.find(m => !wouldBeInDanger(tokens, color, m.newPos)) || captures[0];
+                return safestCapture.id;
+            }
+            const finish = moves.find(m => m.finishesToken);
+            if (finish) return finish.id;
+            const escape = moves.find(m => m.inDanger && !wouldBeInDanger(tokens, color, m.newPos));
+            if (escape) return escape.id;
+            const anyEscape = moves.find(m => m.inDanger);
+            if (anyEscape) return anyEscape.id;
+            const homeEntry = moves.find(m => m.entersHomeColumn);
+            if (homeEntry) return homeEntry.id;
+            const leave = moves.find(m => m.leavesYard);
+            const tokensOnBoard = tokens.filter(t => t.color === color && t.pos >= 0 && t.pos <= 50).length;
+            if (leave && dice === 6 && tokensOnBoard < 3) return leave.id;
+            const safeAdvance = moves.filter(m => !m.leavesYard && !wouldBeInDanger(tokens, color, m.newPos));
+            const candidatePool = safeAdvance.length > 0 ? safeAdvance : moves.filter(m => !m.leavesYard);
+            const pool = candidatePool.length > 0 ? candidatePool : moves;
+            const sorted = [...pool].sort((a, b) => b.token.pos - a.token.pos);
+            return sorted[0].id;
+        }
+
+        // LEGEND: near-perfect play — master's evaluation, tie-broken by
+        // whichever move maximizes total board safety across all of the
+        // bot's tokens (a lightweight 1-ply lookahead across candidates).
+        function LegendMove(tokens, color, dice) {
+            const moves = describeMoves(tokens, color, dice);
+            if (moves.length === 0) return null;
+            if (moves.length === 1) return moves[0].id;
+            function scoreMove(m) {
+                let score = 0;
+                if (m.capturesRival) {
+                    const globalIdx = (START_OFFSET[color] + m.newPos) % 52;
+                    const rival = tokens.find(r => r.color !== color && r.pos >= 0 && r.pos <= 50 &&
+                        (START_OFFSET[r.color] + r.pos) % 52 === globalIdx);
+                    score += 100 + (rival ? rival.pos : 0);
+                }
+                if (m.finishesToken) score += 90;
+                if (m.entersHomeColumn) score += 40;
+                if (m.inDanger) score += 35; // resolving current danger is valuable
+                if (m.isSafeSquare) score += 20;
+                if (wouldBeInDanger(tokens, color, m.newPos)) score -= 60;
+                if (m.leavesYard) score += (dice === 6 ? 15 : 0);
+                score += m.token.pos * 0.5; // mild preference for advancing further tokens
+                return score;
+            }
+            const scored = moves.map(m => ({ m, s: scoreMove(m) }));
+            scored.sort((a, b) => b.s - a.s);
+            return scored[0].m.id;
+        }
+
+        const BOT_LEVELS = {
+            WARM_UP: "warm_up",
+            BEGINNER: "beginner",
+            EASY: "easy",
+            MEDIUM: "medium",
+            HARD: "hard",
+            EXPERT: "expert",
+            MASTER: "master",
+            LEGEND: "legend"
+        };
+        // Ladder used to derive a difficulty from a numeric level (1-50),
+        // used by the map screen's level progression.
+        const DIFFICULTY_LADDER = [
+            BOT_LEVELS.WARM_UP, BOT_LEVELS.BEGINNER, BOT_LEVELS.EASY, BOT_LEVELS.MEDIUM,
+            BOT_LEVELS.HARD, BOT_LEVELS.EXPERT, BOT_LEVELS.MASTER, BOT_LEVELS.LEGEND
+        ];
+        function difficultyForLevel(lvl) {
+            const bandSize = Math.ceil(TOTAL_LEVELS_CONST / DIFFICULTY_LADDER.length);
+            const idx = Math.min(DIFFICULTY_LADDER.length - 1, Math.floor((lvl - 1) / bandSize));
+            return DIFFICULTY_LADDER[idx];
+        }
+        const TOTAL_LEVELS_CONST = 50;
+        function chooseBotMove(tokens, color, dice, difficulty) {
+
+            switch (difficulty) {
+
+                case BOT_LEVELS.WARM_UP:
+                    return warmUpMove(tokens, color, dice);
+
+                case BOT_LEVELS.BEGINNER:
+                    return beginnerMove(tokens, color, dice);
+
+                case BOT_LEVELS.EASY:
+                    return easyMove(tokens, color, dice);
+
+                case BOT_LEVELS.MEDIUM:
+                    return mediumMove(tokens, color, dice);
+
+                case BOT_LEVELS.HARD:
+                    return hardMove(tokens, color, dice);
+
+                case BOT_LEVELS.EXPERT:
+                    return expertMove(tokens, color, dice);
+
+                case BOT_LEVELS.MASTER:
+                    return masterMove(tokens, color, dice);
+
+                case BOT_LEVELS.LEGEND:
+                    return LegendMove(tokens, color, dice);
+
+                default:
+                    return mediumMove(tokens, color, dice);
+            }
+        }
         function GameScreen({ setScreen, players }) {
             const ACTIVE_COLORS = players.map(p => p.color);
             const [tokens, setTokens] = useState(() => createInitialTokens(ACTIVE_COLORS));
@@ -1059,8 +1689,13 @@
                 if (!player?.isBot || winner) return;
                 if (hasRolled && !movingToken) {
                     const timer = setTimeout(() => {
-                        const tokenId = chooseBotMove(tokens, currentColor, diceState[currentColor].value);
+                        const tokenId = chooseBotMove(tokens, currentColor, diceState[currentColor].value, player.difficulty);
                         if (tokenId) handleTokenClick(tokenId);
+                        else {
+                            // no legal move for the bot — pass the turn
+                            setHasRolled(false);
+                            setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
+                        }
                     }, 700);
                     return () => clearTimeout(timer);
                 }
@@ -1135,19 +1770,184 @@
             );
         }
 
+        /* ═══════════════════════ CANDY-CRUSH STYLE LEVEL MAP ═══════════════════════ */
+
+        const TOTAL_LEVELS = 50;
+        const NODE_R = 30;
+        const V_GAP = 92;
+        const TOP_PAD = 50;
+        const BOT_PAD = 140;
+        const MAP_W = 480;
+        const MAP_H = TOP_PAD + (TOTAL_LEVELS - 1) * V_GAP + NODE_R + BOT_PAD;
+
+        const SX = [0.50, 0.30, 0.20, 0.30, 0.50, 0.70, 0.80, 0.70];
+        const nx = (i) => SX[i % SX.length] * MAP_W;
+        const ny = (i) => TOP_PAD + (TOTAL_LEVELS - 1 - i) * V_GAP + NODE_R;
+
+        // Rotating band palette — a "biome" every 5 levels, echoing the candy-crush trail look
+        const BAND_COLORS = [
+            { sky: ["#2a1750", "#4a2b7a"], accent: "#FF5FA0" },
+            { sky: ["#0e2f52", "#1a5c8f"], accent: "#2196D6" },
+            { sky: ["#3a2410", "#6b4318"], accent: "#FF8C42" },
+            { sky: ["#231447", "#3d2472"], accent: "#A066FF" },
+            { sky: ["#0c3d2e", "#146b4e"], accent: "#2EC99A" },
+            { sky: ["#402a12", "#734c1e"], accent: "#FFA500" },
+            { sky: ["#3a1530", "#631f52"], accent: "#FF6B8A" },
+            { sky: ["#0d3838", "#146b68"], accent: "#00968F" },
+            { sky: ["#2c1616", "#5c2727"], accent: "#DF2D2D" },
+            { sky: ["#241a3d", "#3d2b66"], accent: "#9933FF" },
+        ];
+        const BAND_SIZE = 5;
+        const getBand = (levelIndex) => BAND_COLORS[Math.floor(levelIndex / BAND_SIZE) % BAND_COLORS.length];
+
+        const DECOR = ['🎪', '🌲', '🏡', '🌴', '🤹', '🎡', '⛺', '🎭', '🐘', '🎲'];
+
+        function buildMapGradient() {
+            const bandPx = BAND_SIZE * V_GAP;
+            const totalBands = Math.ceil(TOTAL_LEVELS / BAND_SIZE) + 1;
+            const stops = [];
+            for (let b = totalBands - 1; b >= 0; b--) {
+                const bottomPx = MAP_H - BOT_PAD / 2 - b * bandPx;
+                const topPx = bottomPx - bandPx;
+                const band = BAND_COLORS[b % BAND_COLORS.length];
+                const pct1 = Math.max(0, Math.min(100, (topPx / MAP_H) * 100));
+                const pct2 = Math.max(0, Math.min(100, (bottomPx / MAP_H) * 100));
+                stops.push(`${band.sky[0]} ${pct1}%`, `${band.sky[1]} ${pct2}%`);
+            }
+            return `linear-gradient(to bottom, ${stops.join(", ")})`;
+        }
+
+        function CandyPath({ x1, y1, x2, y2, color }) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+            return (
+                <div style={{
+                    position: "absolute", left: x1, top: y1 - 5, width: len, height: 10, borderRadius: 5,
+                    background: `repeating-linear-gradient(90deg, ${color} 0px, ${color} 10px, rgba(255,255,255,0.55) 10px, rgba(255,255,255,0.55) 16px)`,
+                    transform: `rotate(${ang}deg)`, transformOrigin: "0 50%", opacity: 0.85,
+                    boxShadow: "0 3px 5px rgba(0,0,0,0.25)"
+                }} />
+            );
+        }
+
+        function LevelNode({ lvl, cx, cy, status, stars, accent, onPress }) {
+            if (status === "current") {
+                return (
+                    <div style={{ position: "absolute", left: cx - NODE_R - 20, top: cy - NODE_R - 54, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 50 }}>
+                        <div className="go-badge" style={{ background: accent }}>GO!</div>
+                        <div className="pin-outer" style={{ width: 60, height: 60, background: accent, boxShadow: `0 10px 20px ${accent}66` }} onClick={onPress}>
+                            <div className="pin-avatar-ring">🎲</div>
+                        </div>
+                    </div>
+                );
+            }
+            if (status === "completed") {
+                return (
+                    <div style={{ position: "absolute", left: cx - NODE_R, top: cy - NODE_R, zIndex: 10, cursor: "pointer" }} onClick={onPress}>
+                        <div className="node-cookie" style={{ width: NODE_R * 2, height: NODE_R * 2, background: accent }}>
+                            <span style={{ fontFamily: "'Baloo 2', sans-serif", color: "#fff", fontWeight: 900, fontSize: 15 }}>{lvl}</span>
+                        </div>
+                        <div style={{ position: "absolute", bottom: -12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 2 }}>
+                            {[1, 2, 3].map(k => <span key={k} style={{ fontSize: 9, opacity: k <= stars ? 1 : 0.2 }}>⭐</span>)}
+                        </div>
+                    </div>
+                );
+            }
+            return (
+                <div style={{ position: "absolute", left: cx - NODE_R, top: cy - NODE_R, zIndex: 10 }}>
+                    <div className="node-locked" style={{ width: NODE_R * 2, height: NODE_R * 2 }}>
+                        <span style={{ fontSize: 14 }}>🔒</span>
+                        <span style={{ fontFamily: "'Baloo 2', sans-serif", color: "rgba(255,255,255,0.85)", fontWeight: 900, fontSize: 10 }}>{lvl}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        function MapScreen({ highestCompleted, levelStars, onSelectLevel, gold }) {
+            const scrollRef = useRef(null);
+            const currentLevel = Math.min(highestCompleted + 1, TOTAL_LEVELS);
+            const [soundOn, setSoundOn] = useState(soundEnabled);
+
+            const positions = useMemo(() => Array.from({ length: TOTAL_LEVELS }, (_, i) => ({ x: nx(i), y: ny(i) })), []);
+            const mapGradient = useMemo(() => buildMapGradient(), []);
+
+            useEffect(() => {
+                const nodeY = ny(currentLevel - 1);
+                const target = Math.max(0, nodeY - 320);
+                scrollRef.current?.scrollTo({ top: target, behavior: "auto" });
+            }, []);
+
+            const decor = useMemo(() => {
+                const items = [];
+                const count = Math.ceil(MAP_H / 190);
+                for (let i = 0; i < count; i++) {
+                    items.push({
+                        key: i, top: i * 190 + 40,
+                        side: i % 2 === 0 ? "left" : "right",
+                        val: 8 + (i % 4) * 6,
+                        emoji: DECOR[i % DECOR.length]
+                    });
+                }
+                return items;
+            }, []);
+
+            const getStatus = (lvl) => lvl <= highestCompleted ? "completed" : lvl === currentLevel ? "current" : "locked";
+
+            const toggleSound = () => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next); };
+
+            return (
+                <div className="map-outer">
+                    <div className="map-header" style={{ background: "linear-gradient(135deg,#3d2472,#5a2f8f)" }}>
+                        <div className="flex items-center justify-between">
+                            <button className="icon-btn" onClick={toggleSound}>{soundOn ? "🔊" : "🔇"}</button>
+                            <div className="pill" style={{ color: "#E84393" }}>❤️ <span>5</span></div>
+                            <div className="avatar-ring">🐉</div>
+                            <div className="pill" style={{ color: "#856404" }}>🥇 <span>{gold}</span></div>
+                            <button className="icon-btn">⚙️</button>
+                        </div>
+                        <div className="map-title">Ludo Regina</div>
+                    </div>
+
+                    <div className="map-scroll" ref={scrollRef}>
+                        <div style={{ position: "relative", width: MAP_W, height: MAP_H, margin: "0 auto", background: mapGradient }}>
+                            {decor.map(d => (
+                                <span key={d.key} style={{ position: "absolute", top: d.top, [d.side]: d.val, fontSize: 26, opacity: 0.45 }}>{d.emoji}</span>
+                            ))}
+
+                            {positions.map((p, i) => {
+                                if (i === 0) return null;
+                                const prev = positions[i - 1];
+                                const band = getBand(i);
+                                return <CandyPath key={i} x1={prev.x} y1={prev.y} x2={p.x} y2={p.y} color={band.accent} />;
+                            })}
+
+                            {positions.map((p, i) => {
+                                const lvl = i + 1;
+                                const band = getBand(i);
+                                const status = getStatus(lvl);
+                                return (
+                                    <LevelNode key={lvl} lvl={lvl} cx={p.x} cy={p.y} status={status}
+                                        stars={levelStars[lvl] || 0} accent={band.accent}
+                                        onPress={() => { if (status !== "locked") onSelectLevel(lvl); }} />
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function PlayerCard({ mode, selected, onClick }) {
+
+        }
         function HomeScreen({ setScreen, setPlayers }) {
+            const { t } = useTranslation();
             const [mode, setMode] = useState("1bot");
             const modeInfo = MODES.find(m => m.id === mode);
             const maxPlayers = modeInfo.players;
             const [humanColor, setHumanColor] = useState("red");
             const ALL_COLORS = ["red", "green", "yellow", "blue"];
-
-            useEffect(() => {
-                if (!ALL_COLORS.includes(humanColor)) {
-                    setHumanColor(availableColors[0]);
-                }
-                // eslint-disable-next-line
-            }, [mode]);
 
             const players = ALL_COLORS.map(color => ({
                 color,
@@ -1157,48 +1957,112 @@
 
             const handleStart = () => {
                 const players = [];
+                const TWO_PLAYER_MAP = {
+                    "red": "yellow",
+                    "green": "blue",
+                    "yellow": "red",
+                    "blue": "green"
+                }
                 players.push({
                     color: humanColor,
                     isBot: false,
+                    difficulty: null,
                     name: "You"
                 });
                 const remaining = ALL_COLORS.filter(c => c !== humanColor);
-                for (let i = 0; i < maxPlayers - 1; i++) {
+                if (maxPlayers === 2) {
                     players.push({
-                        color: remaining[i],
+                        color: TWO_PLAYER_MAP[humanColor],
                         isBot: true,
-                        name: `Bot ${i + 1}`
+                        difficulty: BOT_LEVELS.WARM_UP,
+                        name: "Bot"
                     });
+                } else {
+                    for (let i = 0; i < maxPlayers - 1; i++) {
+                        players.push({
+                            color: remaining[i],
+                            isBot: true,
+                            difficulty: BOT_LEVELS.WARM_UP,
+                            name: `Bot ${i + 1}`
+                        });
+
+                    }
                 }
                 setPlayers(players);
-                setScreen("game");
+                setScreen("map");
             };
 
             return (
-                <div className="home flex flex-col items-center justify-center h-screen px-4 py-6 overflow-y-auto">
-                    <div className="w-full max-w-sm shadow-xl">
-                        <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Choose a mode</h3>
+                <div className="home flex flex-col items-center justify-center h-screen px-4 py-6">
+                    <div className="text-center">
+                        <div className="title-row">
+                            <span className="dice-icon">🎲</span>
+                            <h1 className="home-title">
+                                LUDO REGINA
+                            </h1>
+                            <span className="dice-icon">🎲</span>
+                        </div>
+                        <p className="home-subtitle">
+                            Tap • Roll • Win!
+                        </p>
+                    </div>
+                    <div className="home-panel">
+                        <h3 className="section-title font-extrabold text-lg mb-1">Choose a mode</h3>
                         <p className="text-white/70 text-xs mb-3">Pick how many are playing.</p>
-                        <div className="grid grid-cols-2 gap-3 mb-5">
+                        <div className="grid grid-cols-2 gap-6 mb-8">
                             {MODES.map(m => (
                                 <button
                                     key={m.id}
                                     className={"flex flex-col items-center justify-center gap-1 rounded-xl border-2 py-3 px-2 transition " +
                                         (mode === m.id
-                                            ? "bg-yellow-400 border-yellow-200 text-blue-900"
-                                            : "bg-blue-800 border-blue-600 text-white hover:bg-blue-700")
+                                            ? "mode-card active"
+                                            : "mode-card")
                                     }
                                     onClick={() => setMode(m.id)}
                                 >
-                                    <div className="flex gap-1 mb-1">
+                                    <div className="flex items-center justify-center gap-1 mb-2">
                                         {Array.from({ length: m.dots }).map((_, i) => (
-                                            <span key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: i === 0 ? "var(--red)" : i === 1 ? "var(--yellow)" : i === 2 ? "var(--green)" : "var(--blue)" }} />
+                                            <div
+                                                key={i}
+                                                className="player-mini"
+                                                style={{
+                                                    background: [
+                                                        "var(--red)",
+                                                        "var(--green)",
+                                                        "var(--yellow)",
+                                                        "var(--blue)"
+                                                    ][i]
+                                                }}
+                                            >
+                                                👤
+                                            </div>
                                         ))}
                                     </div>
-                                    <span className="font-bold text-sm">{m.label}</span>
-                                    <span className="text-[10px] opacity-70">{m.sub}</span>
+                                    <span className="font-bold text-white/80 text-sm">{m.label}</span>
+                                    <span className="text-[10px] text-white/80 opacity-70">{m.sub}</span>
                                 </button>
                             ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-6 mt-8">
+                            <PlayerCard
+                                mode={MODES[0]}
+                                selected={mode === MODES[0].id}
+                                onClick={() => setMode(MODES[0].id)}
+                            />
+                            <PlayerCard
+                                mode={MODES[1]}
+                                selected={mode === MODES[1].id}
+                                onClick={() => setMode(MODES[1].id)}
+                            />
+                        </div>
+                        <div className="flex justify-center mt-5">
+                            <div className="w-[48%]">
+                                <PlayerCard
+                                    mode={MODES[2]}
+                                    selected={mode === MODES[2].id}
+                                    onClick={() => setMode(MODES[2].id)}
+                                />
+                            </div>
                         </div>
 
                         <h3 className="text-yellow-300 font-extrabold text-lg mb-1">Your color</h3>
@@ -1211,7 +2075,7 @@
                                     key={c}
                                     onClick={() => setHumanColor(c)}
                                     className={
-                                        "w-12 h-12 rounded-full flex items-center justify-center border-4 transition " +
+                                        "color-circle rounded-full flex items-center justify-center border-4 transition " +
                                         (humanColor === c
                                             ? "border-yellow-300 scale-110"
                                             : "border-transparent")
@@ -1223,7 +2087,7 @@
                             ))}
                         </div>
 
-                        <button className="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 border-2 border-yellow-200 text-blue-900 font-extrabold text-lg py-3 rounded-xl shadow-md hover:from-yellow-200 hover:to-yellow-400 transition" onClick={handleStart}>Start Game</button>
+                        <button className="start-btn" onClick={handleStart}>Start Game</button>
 
                         <p className="text-white/60 text-[11px] mt-3 leading-snug">Roll a 6 to bring a token out of base. Land on a rival to send it home — unless they're on a star or start square. Get all 4 tokens to the center to win.</p>
                     </div>
@@ -1232,8 +2096,29 @@
         }
 
         function App() {
-            const [screen, setScreen] = useState("home");
+            const [screen, setScreen] = useState("map");
             const [players, setPlayers] = useState(null);
+
+            const [activeLevel, setActiveLevel] = useState(1);
+            const [highestCompleted, setHighestCompleted] = useState(0);
+            const [levelStars, setLevelStars] = useState({});
+
+            const gamePlayers = useMemo(() => {
+                if (!players) return players;
+                const difficulty = difficultyForLevel(activeLevel);
+                return players.map(p => p.isBot ? { ...p, difficulty } : p);
+            }, [players, activeLevel]);
+
+            const startLevel = (lvl) => {
+                setActiveLevel(Math.min(lvl, TOTAL_LEVELS));
+                setScreen("game");
+            };
+
+            const handleLevelWon = (lvl) => {
+                setHighestCompleted(prev => Math.max(prev, lvl));
+                setLevelStars(prev => ({ ...prev, [lvl]: prev[lvl] || (2 + Math.round(Math.random())) }));
+            };
+
             return (
                 <>
                     <div className="app">
@@ -1243,8 +2128,15 @@
                                 setPlayers={setPlayers}
                             />
                         )}
-                        {screen === "game" && (
-                            <GameScreen setScreen={setScreen} players={players} />
+                        {screen === "map" && (
+                            <MapScreen
+                                highestCompleted={highestCompleted}
+                                levelStars={levelStars}
+                                onSelectLevel={startLevel}
+                            />
+                        )}
+                        {screen === "game" && gamePlayers && (
+                            <GameScreen setScreen={setScreen} players={players} level={activeLevel} />
                         )};
                     </div>
                 </>

@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Ludo Rex — Adventure Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --cream: #FBF7EE;
+            --paper: #fff;
+            --ink: #2B2620;
+            --ink-soft: #6b6459;
+            --board-line: #d8cfc0;
+            --yellow: #ffd76a;
+            --yellow-dark: #e0a91f;
+            --green-dark: #1f7a4d;
+            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #0c1730; }
+
+        .board-shell {
+            box-shadow: var(--shadow-lg);
+            margin-top: 90px;
+        }
+
+        .winner-card {
+            background: var(--cream);
+            border-radius: 26px;
+            padding: 40px 46px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            max-width: 380px;
+        }
+
+        .start-btn {
+            background: linear-gradient(180deg, var(--yellow) 0%, var(--yellow-dark) 100%);
+            color: #3a2600;
+            border: none;
+            font-family: 'Baloo 2', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            padding: 11px 28px;
+            border-radius: 13px;
+            box-shadow: 0 5px 0 #9c6c10, var(--shadow-sm);
+            transition: transform .1s ease, box-shadow .1s ease;
+            cursor: pointer;
+        }
+
+        .start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #9c6c10;
+        }
+
+        .start-btn.ghost {
+            background: linear-gradient(180deg, #fff 0%, #ece5d4 100%);
+            color: var(--ink);
+            box-shadow: 0 5px 0 #c9bfa8, var(--shadow-sm);
+        }
+        .start-btn.ghost:active { box-shadow: 0 1px 0 #c9bfa8; }
+
+        .board {
+            width: min(100%, 88vw);
+            height: min(568px, 88vw);
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            background: var(--paper);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 0 2px var(--board-line);
+            border-radius: 25px;
+        }
+
+        .cell {
+            position: relative;
+            border: 0.5px solid var(--board-line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell.path { background: var(--paper); }
+
+        .cell.safe::before {
+            content: '★';
+            position: absolute;
+            font-size: 160%;
+            color: rgba(43, 38, 32, 0.38);
+        }
+
+        .token {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            cursor: pointer;
+            transition: left .28s cubic-bezier(.4, 1.4, .6, 1), top .28s cubic-bezier(.4, 1.4, .6, 1), transform .15s ease;
+            z-index: 5;
+        }
+
+        .token.movable { animation: tokenPulse 1s ease-in-out infinite; cursor: pointer; }
+        .token.movable:hover { transform: scale(1.15); }
+
+        .dice3d.can-roll { animation: diceIdle 1.8s ease-in-out infinite; cursor: pointer; }
+        .dice3d.rolling { animation: diceRoll 0.55s ease-in-out; }
+
+        .dice-wrap { perspective: 500px; }
+        .dice-cube { position: relative; width: 50px; height: 50px; transform-style: preserve-3d; }
+        .dice-face {
+            position: absolute; width: 50px; height: 50px;
+            background: linear-gradient(145deg, #ffffff, #e8e0cc);
+            border-radius: 10px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(0, 0, 0, 0.08);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dice-face.front { transform: translateZ(30px); }
+        .dice-face.back { transform: rotateY(180deg) translateZ(30px); }
+        .dice-face.right { transform: rotateY(90deg) translateZ(30px); }
+        .dice-face.left { transform: rotateY(-90deg) translateZ(30px); }
+        .dice-face.top { transform: rotateX(90deg) translateZ(30px); }
+        .dice-face.bottom { transform: rotateX(-90deg) translateZ(30px); }
+
+        @keyframes tokenPulse {
+            0%, 100% { box-shadow: 0 2px 3px rgba(0,0,0,.35), inset 0 2px 2px rgba(255,255,255,.5), 0 0 0 0 rgba(255,255,255,.6); }
+            50% { box-shadow: 0 2px 3px rgba(0,0,0,.35), inset 0 2px 2px rgba(255,255,255,.5), 0 0 0 6px rgba(255,255,255,0); }
+        }
+        @keyframes diceIdle {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-4px) rotate(-4deg); }
+        }
+        @keyframes goBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes pinPop {
+            0% { transform: scale(0.6); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .app {
+            text-align: center;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .game { position: relative; width: 100%; min-height: 100vh; background: #0c1730; padding-bottom: 40px; }
+        .game > * { position: relative; z-index: 1; }
+
+        /* ── Candy map ─────────────────────────────────────────── */
+        .map-outer {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #10203f;
+        }
+        .map-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: relative;
+            scrollbar-width: thin;
+        }
+        .map-header {
+            padding: 14px 16px 16px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+            position: relative;
+            z-index: 5;
+        }
+        .icon-btn {
+            width: 40px; height: 40px; border-radius: 20px;
+            background: rgba(255,255,255,0.25);
+            display: flex; align-items: center; justify-content: center;
+            border: none; cursor: pointer; font-size: 19px;
+        }
+        .pill {
+            display: flex; align-items: center; gap: 4px;
+            background: #fff; padding: 6px 12px; border-radius: 24px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.18);
+            font-weight: 900; font-family: 'Baloo 2', sans-serif; font-size: 15px;
+        }
+        .avatar-ring {
+            width: 56px; height: 56px; border-radius: 28px; background: #fff;
+            border: 3.5px solid rgba(255,255,255,0.95);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+            font-size: 28px;
+        }
+        .map-title {
+            font-family: 'Baloo 2', sans-serif;
+            color: #fff; font-weight: 800; font-size: 20px; letter-spacing: .5px;
+            text-align: center; margin-top: 10px;
+        }
+
+        .node-cookie {
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 4.5px solid rgba(255,255,255,0.92);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.18), inset 0 -4px 6px rgba(0,0,0,0.12);
+        }
+        .node-locked {
+            border-radius: 50%;
+            background: #7b7691;
+            border: 4.5px solid rgba(255,255,255,0.7);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 0.9;
+        }
+        .go-badge {
+            padding: 6px 20px; border-radius: 18px; margin-bottom: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-family: 'Baloo 2', sans-serif; color: #fff; font-weight: 900;
+            font-size: 14px; letter-spacing: 1.5px;
+            animation: goBounce 1s ease-in-out infinite;
+        }
+        .pin-outer {
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 3.5px solid rgba(255,255,255,0.6);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+            cursor: pointer;
+            animation: pinPop .3s ease-out;
+        }
+        .pin-avatar-ring {
+            width: 50px; height: 50px; border-radius: 25px; background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid rgba(255,255,255,0.7);
+            font-size: 26px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        /* ═══════════════════════ LUDO CORE (mechanics) ═══════════════════════ */
+
+        const START_OFFSET = { red: 39, green: 0, yellow: 13, blue: 26 };
+        const SAFE_GLOBAL = [0, 8, 13, 21, 26, 34, 39, 47];
+        const ENTRY_ARROWS = { red: [13, 6], green: [6, 1], yellow: [1, 8], blue: [8, 13] };
+
+        const SOUNDS = {
+            dice: new Audio("https://cdn.freesound.org/previews/736/736744_15933495-lq.mp3"),
+            move: new Audio("https://cdn.freesound.org/previews/464/464909_4284968-lq.mp3"),
+            capture: new Audio("https://cdn.freesound.org/previews/855/855914_15895934-lq.mp3"),
+            pass: new Audio("https://cdn.freesound.org/previews/844/844146_10594370-lq.mp3"),
+            win: new Audio("https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3")
+        };
+        let soundEnabled = true;
+        function setSoundEnabled(v) { soundEnabled = v; }
+        function playSound(name) {
+            if (!soundEnabled) return;
+            const s = SOUNDS[name];
+            if (!s) return;
+            s.currentTime = 0;
+            s.play().catch(() => {});
+        }
+
+        const YARD_COORDS = {
+            green: [[1.5, 1.5], [1.5, 3.5], [3.5, 1.5], [3.5, 3.5]],
+            yellow: [[1.5, 10.5], [1.5, 12.5], [3.5, 10.5], [3.5, 12.5]],
+            red: [[10.5, 1.5], [10.5, 3.5], [12.5, 1.5], [12.5, 3.5]],
+            blue: [[10.5, 10.5], [10.5, 12.5], [12.5, 10.5], [12.5, 12.5]],
+        };
+
+        function buildTrackCoords() {
+            const path = [
+                [6, 1], [6, 2], [6, 3], [6, 4], [6, 5],
+                [5, 6], [4, 6], [3, 6], [2, 6], [1, 6], [0, 6],
+                [0, 7], [0, 8],
+                [1, 8], [2, 8], [3, 8], [4, 8], [5, 8],
+                [6, 9], [6, 10], [6, 11], [6, 12], [6, 13], [6, 14],
+                [7, 14], [8, 14],
+                [8, 13], [8, 12], [8, 11], [8, 10], [8, 9],
+                [9, 8], [10, 8], [11, 8], [12, 8], [13, 8], [14, 8],
+                [14, 7], [14, 6],
+                [13, 6], [12, 6], [11, 6], [10, 6], [9, 6],
+                [8, 5], [8, 4], [8, 3], [8, 2], [8, 1], [8, 0],
+                [7, 0], [6, 0]
+            ];
+            return path;
+        }
+        const TRACK_COORDS = buildTrackCoords();
+
+        const COLOR_HEX = {
+            red: { main: "#df2d2d", dark: "#C92E28", soft: "#FFD9D3" },
+            green: { main: "#0b8b22", dark: "#149350", soft: "#D3F5E0" },
+            yellow: { main: "#ffd400", dark: "#E09400", soft: "#FFEBBE" },
+            blue: { main: "#1d88e5", dark: "#1573C4", soft: "#D3E9FE" },
+        };
+
+        function ColorGlyph({ color, size = 30 }) {
+            const hex = COLOR_HEX[color].main;
+            return (
+                <svg viewBox="0 0 100 100" width={size} height={size}>
+                    <path d="M50 8 C27 8 10 26 10 48 C10 68 35 85 50 96 C65 85 90 68 90 48 C90 26 73 8 50 8 Z"
+                        fill={hex} stroke="white" strokeWidth="6" strokeLinejoin="round" />
+                    <circle cx="50" cy="45" r="16" fill="white" opacity="0.9" />
+                </svg>
+            );
+        }
+
+        function CenterTriangle() {
+            const hex = c => COLOR_HEX[c].main;
+            return (
+                <div style={{ gridRow: "7 / span 3", gridColumn: "7 / span 3", position: "relative", pointerEvents: "none" }}>
+                    <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ overflow: "visible" }}>
+                        <g transform="translate(50,50) translate(-50,-50)">
+                            <polygon points="0,0 50,50 0,100" fill={hex("green")} />
+                            <polygon points="0,0 100,0 50,50" fill={hex("yellow")} />
+                            <polygon points="100,0 100,100 50,50" fill={hex("blue")} />
+                            <polygon points="0,100 100,100 50,50" fill={hex("red")} />
+                        </g>
+                    </svg>
+                </div>
+            );
+        }
+
+        function HomeYard({ color }) {
+            const positions = { green: [0, 0], yellow: [0, 9], red: [9, 0], blue: [9, 9] };
+            const [r0, c0] = positions[color];
+            const hex = COLOR_HEX[color];
+            return (
+                <div style={{ gridRow: (r0 + 1) + " / span 6", gridColumn: (c0 + 1) + " / span 6", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                    <div style={{ width: "66%", height: "66%", background: "white", borderRadius: "14%", display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: "12%", padding: "12%", boxShadow: "0 4px 10px rgba(0,0,0,0.18)" }}>
+                        {[0, 1, 2, 3].map(i => (
+                            <div key={i} style={{ background: hex.soft, borderRadius: "50%", border: `3px solid ${hex.main}` }} />
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function buildHomeCols() {
+            const cols = { green: [], yellow: [], blue: [], red: [] };
+            for (let c = 1; c <= 5; c++) cols.green.push([7, c]);
+            for (let r = 1; r <= 5; r++) cols.yellow.push([r, 7]);
+            for (let c = 13; c >= 9; c--) cols.blue.push([7, c]);
+            for (let r = 13; r >= 9; r--) cols.red.push([r, 7]);
+            return cols;
+        }
+        const HOME_COLS = buildHomeCols();
+
+        const CENTER_CELLS = { yellow: [6.3, 7], green: [7, 6.3], blue: [7, 7.7], red: [7.7, 7] };
+
+        function tokenCoord(color, pos, tokenIdx) {
+            if (pos === -1) { const [r, c] = YARD_COORDS[color][tokenIdx]; return { row: r, col: c }; }
+            if (pos === 56) { const [r, c] = CENTER_CELLS[color]; return { row: r, col: c }; }
+            if (pos >= 51) { const idx = pos - 51; const [r, c] = HOME_COLS[color][idx]; return { row: r, col: c }; }
+            const globalIdx = (START_OFFSET[color] + pos) % 52;
+            const [r, c] = TRACK_COORDS[globalIdx];
+            return { row: r, col: c };
+        }
+
+        function Token({ color, tokenIdx, pos, stackCount = 1, stackOffset = 0, movable, onClick }) {
+            const { row, col } = tokenCoord(color, pos, tokenIdx);
+            const STACK_OFFSETS = {
+                1: [{ x: 0, y: 0 }],
+                2: [{ x: -5, y: 0 }, { x: 5, y: 0 }],
+                3: [{ x: -5, y: -4 }, { x: 5, y: -4 }, { x: 0, y: 5 }],
+                4: [{ x: -5, y: -5 }, { x: 5, y: -5 }, { x: -5, y: 5 }, { x: 5, y: 5 }]
+            };
+            const offset = STACK_OFFSETS[Math.min(stackCount, 4)][stackOffset];
+            let tokenSize = 6.4;
+            switch (stackCount) { case 2: tokenSize = 4.8; break; case 3: tokenSize = 4.4; break; case 4: tokenSize = 4.0; break; }
+            const halfToken = tokenSize / 2;
+            const cellSize = 100 / 15;
+            const jitter = stackCount > 1 ? (stackOffset * 6 - (stackCount - 1) * 3) : 0;
+            const style = {
+                position: "absolute",
+                left: `calc(${col * cellSize}% + ${cellSize * 0.5}% - ${halfToken}% + ${jitter}% + ${offset.x}px)`,
+                top: `calc(${row * cellSize}% + ${cellSize * 0.5}% - ${halfToken}% + ${offset.y}px)`,
+                width: `${tokenSize}%`, height: `${tokenSize}%`,
+                background: COLOR_HEX[color].main,
+            };
+            return <div className={"token" + (movable ? " movable" : "")} style={style} onClick={movable ? onClick : undefined} />;
+        }
+
+        const PIP_LAYOUTS = {
+            1: [[50, 50]], 2: [[25, 25], [75, 75]], 3: [[25, 25], [50, 50], [75, 75]],
+            4: [[25, 25], [75, 25], [25, 75], [75, 75]],
+            5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
+            6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]],
+        };
+        function DiceFace({ value }) {
+            return (
+                <svg viewBox="0 0 100 100" width="50" height="50">
+                    {PIP_LAYOUTS[value].map(([cx, cy], i) => <circle key={i} cx={cx} cy={cy} r="9" fill="#2B2620" />)}
+                </svg>
+            );
+        }
+        const FACE_ROTATION = { 1: { x: 0, y: 0 }, 6: { x: 0, y: -180 }, 2: { x: 0, y: -90 }, 5: { x: 0, y: 90 }, 3: { x: -90, y: 0 }, 4: { x: 90, y: 0 } };
+        function DiceCube({ value, rollId }) {
+            const spinRef = useRef(0);
+            const computeTransform = (v) => {
+                spinRef.current += 2;
+                const target = FACE_ROTATION[v];
+                return `rotateX(${target.x + spinRef.current * 360}deg) rotateY(${target.y + spinRef.current * 360}deg)`;
+            };
+            const [transform, setTransform] = useState(() => computeTransform(value));
+            useEffect(() => { setTransform(computeTransform(value)); }, [rollId]);
+            return (
+                <div className="dice-cube" style={{ transform, transition: "transform 0.7s cubic-bezier(.34,1.56,.64,1)" }}>
+                    <div className="dice-face front"><DiceFace value={1} /></div>
+                    <div className="dice-face back"><DiceFace value={6} /></div>
+                    <div className="dice-face right"><DiceFace value={2} /></div>
+                    <div className="dice-face left"><DiceFace value={5} /></div>
+                    <div className="dice-face top"><DiceFace value={3} /></div>
+                    <div className="dice-face bottom"><DiceFace value={4} /></div>
+                </div>
+            );
+        }
+        function Dice({ value, rollId, isRolling, onRoll }) {
+            return (
+                <div className="dice-wrap">
+                    <div className={"dice3d" + (isRolling ? " rolling" : " can-roll")} onClick={onRoll}>
+                        <DiceCube value={value} rollId={rollId} />
+                    </div>
+                </div>
+            );
+        }
+
+        const CELL_TYPES = { EMPTY: "empty", PATH: "path", YARD: "yard", SAFE: "safe", HOME: "home", CENTER: "center" };
+        function getCellBackground(cell) {
+            switch (cell.type) {
+                case CELL_TYPES.YARD: return COLOR_HEX[cell.color].main;
+                case CELL_TYPES.PATH: return cell.color ? COLOR_HEX[cell.color].main : "#ffffff";
+                case CELL_TYPES.HOME: return COLOR_HEX[cell.color].main;
+                case CELL_TYPES.CENTER: return "#ffffff";
+                default: return "#ffffff";
+            }
+        }
+        function Cell({ board }) {
+            return (
+                <>
+                    {board.map((row) => row.map((cell) => (
+                        <div key={`${cell.row}-${cell.col}`}
+                            className={"cell" + (cell.safe ? " safe" : "")}
+                            style={{
+                                gridRow: cell.row + 1, gridColumn: cell.col + 1,
+                                background: getCellBackground(cell),
+                                border: cell.type === CELL_TYPES.PATH ? "1px solid #999" : cell.type === CELL_TYPES.YARD ? "none" : "1px solid #d9d9d9"
+                            }} />
+                    )))}
+                </>
+            );
+        }
+
+        function setCell(board, row, col, data) { Object.assign(board[row][col], data); }
+        function fillRect(board, startRow, startCol, rows, cols, data) {
+            for (let r = startRow; r < startRow + rows; r++)
+                for (let c = startCol; c < startCol + cols; c++) setCell(board, r, c, data);
+        }
+        function buildCenterCoords() {
+            const coords = [];
+            for (let r = 6; r <= 8; r++) for (let c = 6; c <= 8; c++) coords.push([r, c]);
+            return coords;
+        }
+        const CENTER_COORDS = buildCenterCoords();
+        const BOARD_SIZE = 15;
+        function createBoard() {
+            const board = [];
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                const currentRow = [];
+                for (let col = 0; col < BOARD_SIZE; col++) currentRow.push({ row, col, type: CELL_TYPES.EMPTY, color: null, safe: false, arrow: null });
+                board.push(currentRow);
+            }
+            fillRect(board, 0, 0, 6, 6, { type: CELL_TYPES.YARD, color: "green" });
+            fillRect(board, 0, 9, 6, 6, { type: CELL_TYPES.YARD, color: "yellow" });
+            fillRect(board, 9, 0, 6, 6, { type: CELL_TYPES.YARD, color: "red" });
+            fillRect(board, 9, 9, 6, 6, { type: CELL_TYPES.YARD, color: "blue" });
+            TRACK_COORDS.forEach(([row, col]) => setCell(board, row, col, { type: CELL_TYPES.PATH }));
+            Object.keys(HOME_COLS).forEach((color) => HOME_COLS[color].forEach(([row, col]) => setCell(board, row, col, { type: CELL_TYPES.HOME, color })));
+            SAFE_GLOBAL.forEach((globalIdx) => { const [row, col] = TRACK_COORDS[globalIdx]; setCell(board, row, col, { safe: true }); });
+            Object.keys(ENTRY_ARROWS).forEach((color) => { const [row, col] = ENTRY_ARROWS[color]; setCell(board, row, col, { color }); });
+            CENTER_COORDS.forEach(([row, col]) => setCell(board, row, col, { type: CELL_TYPES.CENTER }));
+            return board;
+        }
+
+        function createInitialTokens(activeColors) {
+            const tokens = [];
+            activeColors.forEach(color => { for (let i = 0; i < 4; i++) tokens.push({ id: color + "-" + i, color, tokenIdx: i, pos: -1 }); });
+            return tokens;
+        }
+        function getMovableTokenIds(tokens, color, dice) {
+            const movable = [];
+            tokens.forEach(t => {
+                if (t.color !== color) return;
+                if (t.pos === -1) { if (dice === 6) movable.push(t.id); return; }
+                if (t.pos === 56) return;
+                if (t.pos + dice <= 56) movable.push(t.id);
+            });
+            return movable;
+        }
+        function applyCapture(tokens, movedToken) {
+            if (movedToken.pos < 0 || movedToken.pos > 50) return { tokens, captured: false };
+            const globalIdx = (START_OFFSET[movedToken.color] + movedToken.pos) % 52;
+            if (SAFE_GLOBAL.includes(globalIdx)) return { tokens, captured: false };
+            let captured = false;
+            const result = tokens.map(t => {
+                if (t.color === movedToken.color) return t;
+                if (t.pos < 0 || t.pos > 50) return t;
+                const rivalGlobalIdx = (START_OFFSET[t.color] + t.pos) % 52;
+                if (rivalGlobalIdx === globalIdx) { captured = true; return { ...t, pos: -1 }; }
+                return t;
+            });
+            return { tokens: result, captured };
+        }
+        function isColorFinished(tokens, color) { return tokens.filter(t => t.color === color).every(t => t.pos === 56); }
+
+        function Board({ tokens, movableTokenIds, onTokenClick }) {
+            const board = useMemo(() => createBoard(), []);
+            const tokenGroups = useMemo(() => {
+                const groups = {};
+                tokens.forEach(token => {
+                    const { row, col } = tokenCoord(token.color, token.pos, token.tokenIdx);
+                    const key = `${row}-${col}`;
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(token);
+                });
+                return groups;
+            }, [tokens]);
+            return (
+                <div className="board">
+                    <Cell board={board} />
+                    <HomeYard color="green" /><HomeYard color="yellow" /><HomeYard color="red" /><HomeYard color="blue" />
+                    <CenterTriangle />
+                    {Object.values(tokenGroups).flatMap(group => group.map((token, index) => (
+                        <Token key={token.id} color={token.color} tokenIdx={token.tokenIdx} pos={token.pos}
+                            stackCount={group.length} stackOffset={index}
+                            movable={movableTokenIds.includes(token.id)} onClick={() => onTokenClick(token.id)} />
+                    )))}
+                </div>
+            );
+        }
+
+        function PlayerPanel({ player, isCurrent, diceState, onRoll }) {
+            return (
+                <div className={`flex items-center gap-1.5 bg-white px-1.5 py-1.5 rounded-lg shadow-lg min-w-[110px] transition-all duration-200 ${isCurrent ? "ring-2" : ""}`}
+                    style={{ "--tw-ring-color": COLOR_HEX[player.color].main }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100">
+                        <ColorGlyph color={player.color} size={34} />
+                    </div>
+                    <div className="flex 1">
+                        <div className="font-bold text-sm">{player.name}</div>
+                        <div className="text-[10px] text-gray-500">{isCurrent ? "Turn" : ""}</div>
+                    </div>
+                    <Dice value={diceState[player.color].value} rollId={diceState[player.color].rollId}
+                        isRolling={diceState[player.color].rolling} onRoll={isCurrent ? onRoll : undefined} />
+                </div>
+            );
+        }
+
+        function chooseBotMove(tokens, color, dice) {
+            const movable = getMovableTokenIds(tokens, color, dice);
+            if (movable.length === 0) return null;
+            if (movable.length === 1) return movable[0];
+            const withResult = movable.map(id => {
+                const token = tokens.find(t => t.id === id);
+                const newPos = token.pos === -1 ? 0 : token.pos + dice;
+                return { id, token, newPos };
+            });
+            const captureMove = withResult.find(({ newPos }) => {
+                if (newPos < 0 || newPos > 50) return false;
+                const globalIdx = (START_OFFSET[color] + newPos) % 52;
+                if (SAFE_GLOBAL.includes(globalIdx)) return false;
+                return tokens.some(t => t.color !== color && t.pos >= 0 && t.pos <= 50 && (START_OFFSET[t.color] + t.pos) % 52 === globalIdx);
+            });
+            if (captureMove) return captureMove.id;
+            const finishMove = withResult.find(({ newPos }) => newPos === 56);
+            if (finishMove) return finishMove.id;
+            const sorted = [...withResult].sort((a, b) => b.token.pos - a.token.pos);
+            return sorted[0].id;
+        }
+
+        /* ═══════════════════════ GAME SCREEN (per level) ═══════════════════════ */
+
+        function GameScreen({ level, players, onExit, onLevelWon }) {
+            const ACTIVE_COLORS = players.map(p => p.color);
+            const humanColor = players.find(p => !p.isBot).color;
+            const [tokens, setTokens] = useState(() => createInitialTokens(ACTIVE_COLORS));
+            const [currentTurnIdx, setCurrentTurnIdx] = useState(0);
+            const [hasRolled, setHasRolled] = useState(false);
+            const currentColor = ACTIVE_COLORS[currentTurnIdx];
+            const [diceState, setDiceState] = useState(
+                ACTIVE_COLORS.reduce((obj, color) => { obj[color] = { value: 1, rolling: false, rollId: 0 }; return obj; }, {})
+            );
+            const [winner, setWinner] = useState(null);
+            const [movingToken, setMovingToken] = useState(null);
+            const [sixCount, setSixCount] = useState(0);
+            const [soundOn, setSoundOn] = useState(true);
+
+            const toggleSound = () => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next); };
+
+            function getMovePath(token, steps) {
+                const path = [];
+                if (token.pos === -1) { path.push(0); return path; }
+                let current = token.pos;
+                for (let i = 1; i <= steps; i++) { current++; if (current > 56) break; path.push(current); }
+                return path;
+            }
+            function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+            async function moveToken(tokenId, path) {
+                for (const position of path) {
+                    await delay(300);
+                    setTokens(prev => prev.map(t => t.id !== tokenId ? t : { ...t, pos: position }));
+                    playSound("move");
+                    if (position === 56) playSound("pass");
+                }
+            }
+
+            const handleRoll = () => {
+                if (diceState[currentColor].rolling || hasRolled || movingToken || winner) return;
+                setDiceState(prev => ({ ...prev, [currentColor]: { ...prev[currentColor], rolling: true } }));
+                setTimeout(() => {
+                    const roll = Math.floor(Math.random() * 6) + 1;
+                    setDiceState(prev => ({ ...prev, [currentColor]: { value: roll, rolling: false, rollId: prev[currentColor].rollId + 1 } }));
+                    playSound("dice");
+                    let newSixCount = sixCount;
+                    roll === 6 ? newSixCount++ : newSixCount = 0;
+                    if (newSixCount === 3) {
+                        setSixCount(0);
+                        setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
+                        setHasRolled(false);
+                        return;
+                    }
+                    setSixCount(newSixCount);
+                    const movable = getMovableTokenIds(tokens, currentColor, roll);
+                    if (movable.length === 0) {
+                        if (roll !== 6) { setSixCount(0); setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length); }
+                        setHasRolled(false);
+                    } else {
+                        setHasRolled(true);
+                    }
+                }, 550);
+            };
+
+            const handleTokenClick = async (tokenId) => {
+                if (movingToken || winner) return;
+                const token = tokens.find(t => t.id === tokenId);
+                if (!token) return;
+                setMovingToken(tokenId);
+                const path = getMovePath(token, token.pos === -1 ? 1 : diceState[currentColor].value);
+                await moveToken(tokenId, path);
+                let justWon = null;
+                setTokens(prev => {
+                    const movedToken = prev.find(t => t.id === tokenId);
+                    const { tokens: result, captured } = applyCapture(prev, movedToken);
+                    if (captured) playSound("capture");
+                    if (isColorFinished(result, movedToken.color)) { justWon = movedToken.color; }
+                    return result;
+                });
+                setMovingToken(null);
+                setHasRolled(false);
+                if (justWon) {
+                    setWinner(justWon);
+                    playSound("win");
+                    if (justWon === humanColor) onLevelWon(level);
+                    return;
+                }
+                if (diceState[currentColor].value !== 6) {
+                    setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
+                }
+            };
+
+            useEffect(() => {
+                const player = players.find(p => p.color === currentColor);
+                if (!player?.isBot || winner) return;
+                if (!hasRolled && !diceState[currentColor].rolling && !movingToken) {
+                    const timer = setTimeout(() => { handleRoll(); }, 700);
+                    return () => clearTimeout(timer);
+                }
+            }, [currentColor, hasRolled, diceState, movingToken, winner]);
+
+            useEffect(() => {
+                const player = players.find(p => p.color === currentColor);
+                if (!player?.isBot || winner) return;
+                if (hasRolled && !movingToken) {
+                    const timer = setTimeout(() => {
+                        const tokenId = chooseBotMove(tokens, currentColor, diceState[currentColor].value);
+                        if (tokenId) handleTokenClick(tokenId);
+                    }, 700);
+                    return () => clearTimeout(timer);
+                }
+            }, [hasRolled, currentColor, movingToken, winner]);
+
+            const won = winner === humanColor;
+
+            return (
+                <div className="game flex gap-[22px] items-start justify-center flex-wrap">
+                    {winner && (
+                        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+                            <div className="winner-card">
+                                <div style={{ fontSize: 46, marginBottom: 6 }}>{won ? "🏆" : "😅"}</div>
+                                <h2 style={{ color: COLOR_HEX[winner].main, fontFamily: "'Baloo 2', sans-serif", fontSize: "24px", fontWeight: 800, marginBottom: "4px" }}>
+                                    {won ? `Level ${level} Complete!` : `${winner.charAt(0).toUpperCase() + winner.slice(1)} Wins`}
+                                </h2>
+                                <p style={{ color: "var(--ink-soft)", fontSize: 13, marginBottom: 18 }}>
+                                    {won ? "Great rolling — next level unlocked." : "Better luck next time, champ."}
+                                </p>
+                                <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+                                    <button className="start-btn ghost" onClick={() => onExit()}>Map</button>
+                                    <button className="start-btn" onClick={() => onExit(won ? level + 1 : level)}>
+                                        {won ? "Next Level" : "Retry"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <div className="flex flex-col items-center gap-3.5" style={{ paddingTop: 14 }}>
+                        <div className="flex items-center justify-between w-full max-w-[600px]">
+                            <div className="flex items-center gap-2.5">
+                                <button className="bg-white/10 text-[#FBF7EE] border border-white/20 rounded-[10px] py-2 px-3.5 text-[13px] font-semibold hover:bg-white/20"
+                                    onClick={() => onExit()}>
+                                    ← Map
+                                </button>
+                                <span className="text-[#FBF7EE] font-['Baloo_2'] text-xl font-bold">Level {level}</span>
+                            </div>
+                            <button onClick={toggleSound}
+                                className="bg-white/10 text-[#FBF7EE] border border-white/20 rounded-[10px] py-2 px-3.5 text-[13px] font-semibold hover:bg-white/20">
+                                {soundOn ? "🔊" : "🔇"}
+                            </button>
+                        </div>
+                        <div className="relative">
+                            <div className="board-shell">
+                                <Board tokens={tokens}
+                                    movableTokenIds={movingToken || winner ? [] : hasRolled ? getMovableTokenIds(tokens, currentColor, diceState[currentColor].value) : []}
+                                    onTokenClick={handleTokenClick} />
+                            </div>
+                            {players.map(p => {
+                                const cornerClass = { green: "absolute left-2", yellow: "absolute right-2", red: "absolute left-2", blue: "absolute right-2" }[p.color];
+                                const cornerStyle = { green: { top: "15px" }, yellow: { top: "15px" }, red: { top: "calc(100% + 15px)" }, blue: { top: "calc(100% + 15px)" } }[p.color];
+                                return (
+                                    <div key={p.color} className={cornerClass} style={cornerStyle}>
+                                        <PlayerPanel player={p} isCurrent={currentColor === p.color} diceState={diceState} onRoll={handleRoll} />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        /* ═══════════════════════ CANDY-CRUSH STYLE LEVEL MAP ═══════════════════════ */
+
+        const TOTAL_LEVELS = 50;
+        const NODE_R = 30;
+        const V_GAP = 92;
+        const TOP_PAD = 50;
+        const BOT_PAD = 140;
+        const MAP_W = 420;
+        const MAP_H = TOP_PAD + (TOTAL_LEVELS - 1) * V_GAP + NODE_R + BOT_PAD;
+
+        const SX = [0.50, 0.30, 0.20, 0.30, 0.50, 0.70, 0.80, 0.70];
+        const nx = (i) => SX[i % SX.length] * MAP_W;
+        const ny = (i) => TOP_PAD + (TOTAL_LEVELS - 1 - i) * V_GAP + NODE_R;
+
+        // Rotating band palette — a "biome" every 5 levels, echoing the candy-crush trail look
+        const BAND_COLORS = [
+            { sky: ["#2a1750", "#4a2b7a"], accent: "#FF5FA0" },
+            { sky: ["#0e2f52", "#1a5c8f"], accent: "#2196D6" },
+            { sky: ["#3a2410", "#6b4318"], accent: "#FF8C42" },
+            { sky: ["#231447", "#3d2472"], accent: "#A066FF" },
+            { sky: ["#0c3d2e", "#146b4e"], accent: "#2EC99A" },
+            { sky: ["#402a12", "#734c1e"], accent: "#FFA500" },
+            { sky: ["#3a1530", "#631f52"], accent: "#FF6B8A" },
+            { sky: ["#0d3838", "#146b68"], accent: "#00968F" },
+            { sky: ["#2c1616", "#5c2727"], accent: "#DF2D2D" },
+            { sky: ["#241a3d", "#3d2b66"], accent: "#9933FF" },
+        ];
+        const BAND_SIZE = 5;
+        const getBand = (levelIndex) => BAND_COLORS[Math.floor(levelIndex / BAND_SIZE) % BAND_COLORS.length];
+
+        const DECOR = ['🎪', '🌲', '🏡', '🌴', '🤹', '🎡', '⛺', '🎭', '🐘', '🎲'];
+
+        function buildMapGradient() {
+            const bandPx = BAND_SIZE * V_GAP;
+            const totalBands = Math.ceil(TOTAL_LEVELS / BAND_SIZE) + 1;
+            const stops = [];
+            for (let b = totalBands - 1; b >= 0; b--) {
+                const bottomPx = MAP_H - BOT_PAD / 2 - b * bandPx;
+                const topPx = bottomPx - bandPx;
+                const band = BAND_COLORS[b % BAND_COLORS.length];
+                const pct1 = Math.max(0, Math.min(100, (topPx / MAP_H) * 100));
+                const pct2 = Math.max(0, Math.min(100, (bottomPx / MAP_H) * 100));
+                stops.push(`${band.sky[0]} ${pct1}%`, `${band.sky[1]} ${pct2}%`);
+            }
+            return `linear-gradient(to bottom, ${stops.join(", ")})`;
+        }
+
+        function CandyPath({ x1, y1, x2, y2, color }) {
+            const dx = x2 - x1, dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            const ang = Math.atan2(dy, dx) * 180 / Math.PI;
+            return (
+                <div style={{
+                    position: "absolute", left: x1, top: y1 - 5, width: len, height: 10, borderRadius: 5,
+                    background: `repeating-linear-gradient(90deg, ${color} 0px, ${color} 10px, rgba(255,255,255,0.55) 10px, rgba(255,255,255,0.55) 16px)`,
+                    transform: `rotate(${ang}deg)`, transformOrigin: "0 50%", opacity: 0.85,
+                    boxShadow: "0 3px 5px rgba(0,0,0,0.25)"
+                }} />
+            );
+        }
+
+        function LevelNode({ lvl, cx, cy, status, stars, accent, onPress }) {
+            if (status === "current") {
+                return (
+                    <div style={{ position: "absolute", left: cx - NODE_R - 20, top: cy - NODE_R - 54, display: "flex", flexDirection: "column", alignItems: "center", zIndex: 50 }}>
+                        <div className="go-badge" style={{ background: accent }}>GO!</div>
+                        <div className="pin-outer" style={{ width: 60, height: 60, background: accent, boxShadow: `0 10px 20px ${accent}66` }} onClick={onPress}>
+                            <div className="pin-avatar-ring">🎲</div>
+                        </div>
+                    </div>
+                );
+            }
+            if (status === "completed") {
+                return (
+                    <div style={{ position: "absolute", left: cx - NODE_R, top: cy - NODE_R, zIndex: 10, cursor: "pointer" }} onClick={onPress}>
+                        <div className="node-cookie" style={{ width: NODE_R * 2, height: NODE_R * 2, background: accent }}>
+                            <span style={{ fontFamily: "'Baloo 2', sans-serif", color: "#fff", fontWeight: 900, fontSize: 15 }}>{lvl}</span>
+                        </div>
+                        <div style={{ position: "absolute", bottom: -12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 2 }}>
+                            {[1, 2, 3].map(k => <span key={k} style={{ fontSize: 9, opacity: k <= stars ? 1 : 0.2 }}>⭐</span>)}
+                        </div>
+                    </div>
+                );
+            }
+            return (
+                <div style={{ position: "absolute", left: cx - NODE_R, top: cy - NODE_R, zIndex: 10 }}>
+                    <div className="node-locked" style={{ width: NODE_R * 2, height: NODE_R * 2 }}>
+                        <span style={{ fontSize: 14 }}>🔒</span>
+                        <span style={{ fontFamily: "'Baloo 2', sans-serif", color: "rgba(255,255,255,0.85)", fontWeight: 900, fontSize: 10 }}>{lvl}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        function LevelMapScreen({ highestCompleted, levelStars, onSelectLevel, gold }) {
+            const scrollRef = useRef(null);
+            const currentLevel = Math.min(highestCompleted + 1, TOTAL_LEVELS);
+            const [soundOn, setSoundOn] = useState(soundEnabled);
+
+            const positions = useMemo(() => Array.from({ length: TOTAL_LEVELS }, (_, i) => ({ x: nx(i), y: ny(i) })), []);
+            const mapGradient = useMemo(() => buildMapGradient(), []);
+
+            useEffect(() => {
+                const nodeY = ny(currentLevel - 1);
+                const target = Math.max(0, nodeY - 320);
+                scrollRef.current?.scrollTo({ top: target, behavior: "auto" });
+            }, []);
+
+            const decor = useMemo(() => {
+                const items = [];
+                const count = Math.ceil(MAP_H / 190);
+                for (let i = 0; i < count; i++) {
+                    items.push({
+                        key: i, top: i * 190 + 40,
+                        side: i % 2 === 0 ? "left" : "right",
+                        val: 8 + (i % 4) * 6,
+                        emoji: DECOR[i % DECOR.length]
+                    });
+                }
+                return items;
+            }, []);
+
+            const getStatus = (lvl) => lvl <= highestCompleted ? "completed" : lvl === currentLevel ? "current" : "locked";
+
+            const toggleSound = () => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next); };
+
+            return (
+                <div className="map-outer">
+                    <div className="map-header" style={{ background: "linear-gradient(135deg,#3d2472,#5a2f8f)" }}>
+                        <div className="flex items-center justify-between">
+                            <button className="icon-btn" onClick={toggleSound}>{soundOn ? "🔊" : "🔇"}</button>
+                            <div className="pill" style={{ color: "#E84393" }}>❤️ <span>5</span></div>
+                            <div className="avatar-ring">🐉</div>
+                            <div className="pill" style={{ color: "#856404" }}>🥇 <span>{gold}</span></div>
+                            <button className="icon-btn">⚙️</button>
+                        </div>
+                        <div className="map-title">Ludo Rex Adventure</div>
+                    </div>
+
+                    <div className="map-scroll" ref={scrollRef}>
+                        <div style={{ position: "relative", width: MAP_W, height: MAP_H, margin: "0 auto", background: mapGradient }}>
+                            {decor.map(d => (
+                                <span key={d.key} style={{ position: "absolute", top: d.top, [d.side]: d.val, fontSize: 26, opacity: 0.45 }}>{d.emoji}</span>
+                            ))}
+
+                            {positions.map((p, i) => {
+                                if (i === 0) return null;
+                                const prev = positions[i - 1];
+                                const band = getBand(i);
+                                return <CandyPath key={i} x1={prev.x} y1={prev.y} x2={p.x} y2={p.y} color={band.accent} />;
+                            })}
+
+                            {positions.map((p, i) => {
+                                const lvl = i + 1;
+                                const band = getBand(i);
+                                const status = getStatus(lvl);
+                                return (
+                                    <LevelNode key={lvl} lvl={lvl} cx={p.x} cy={p.y} status={status}
+                                        stars={levelStars[lvl] || 0} accent={band.accent}
+                                        onPress={() => { if (status !== "locked") onSelectLevel(lvl); }} />
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        /* ═══════════════════════ APP ROOT ═══════════════════════ */
+
+        const ALL_COLORS = ["red", "green", "yellow", "blue"];
+        function buildPlayersForLevel(level) {
+            // Difficulty ramps up with the level — more rivals on the board
+            const botCount = level <= 15 ? 1 : level <= 35 ? 2 : 3;
+            const players = [{ color: "red", isBot: false, name: "You" }];
+            const bots = ALL_COLORS.filter(c => c !== "red").slice(0, botCount);
+            bots.forEach((c, i) => players.push({ color: c, isBot: true, name: `Bot ${i + 1}` }));
+            return players;
+        }
+
+        function App() {
+            const [screen, setScreen] = useState("map");
+            const [activeLevel, setActiveLevel] = useState(1);
+            const [highestCompleted, setHighestCompleted] = useState(0);
+            const [levelStars, setLevelStars] = useState({});
+            const [gold, setGold] = useState(120);
+
+            const startLevel = (lvl) => {
+                setActiveLevel(Math.min(lvl, TOTAL_LEVELS));
+                setScreen("game");
+            };
+
+            const handleLevelWon = (lvl) => {
+                setHighestCompleted(prev => Math.max(prev, lvl));
+                setLevelStars(prev => ({ ...prev, [lvl]: prev[lvl] || (2 + Math.round(Math.random())) }));
+                setGold(prev => prev + 20);
+            };
+
+            const handleExitGame = (nextLevel) => {
+                if (nextLevel) { setActiveLevel(Math.min(nextLevel, TOTAL_LEVELS)); setScreen("game"); }
+                else setScreen("map");
+            };
+
+            return (
+                <div className="app">
+                    {screen === "map" && (
+                        <LevelMapScreen highestCompleted={highestCompleted} levelStars={levelStars} gold={gold} onSelectLevel={startLevel} />
+                    )}
+                    {screen === "game" && (
+                        <GameScreen level={activeLevel} players={buildPlayersForLevel(activeLevel)} onExit={handleExitGame} onLevelWon={handleLevelWon} />
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+</body>
+
+</html>
