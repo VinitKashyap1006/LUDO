@@ -216,7 +216,7 @@
         }
 
         .app {
-            background-image: url("ludo_bg.png");
+            background-image: url("ludo_bg3.png");
             background-position: center;
             background-size: cover;
             text-align: center;
@@ -406,114 +406,167 @@
 
         .map-outer {
             width: 100%;
-            max-width: 480px;
+            max-width: 1080px;
             margin: 0 auto;
-            height: 100vh;
             display: flex;
             flex-direction: column;
+            background: rgba(10, 80, 231, 0.267);
             box-shadow:
                 0 12px 30px rgba(6, 6, 235, 0.45),
                 inset 0 2px 1px rgba(126, 116, 212, 0.35);
+            background-position: center;
+            background-size: cover;
+            height: 100vh;
         }
+
         .map-scroll {
             overflow-y: auto;
             overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: #99b7d6 rgba(14, 14, 15, 0.4);
         }
+
         .map-header {
             padding: 14px 16px 16px;
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
             position: relative;
+            top: 0;
             z-index: 5;
+            height: 165px;
         }
+
         .icon-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 20px;
-            background: rgba(255, 255, 255, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .15);
+            color: white;
+            transition: .25s;
+            backdrop-filter: blur(10px);
             cursor: pointer;
-            font-size: 19px;
         }
-        .pill {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            background: #fff;
-            padding: 6px 12px;
-            border-radius: 24px;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
-            font-weight: 900;
-            font-family: 'Baloo 2', sans-serif;
-            font-size: 15px;
+
+        .icon-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, .15);
+            box-shadow:
+                0 0 18px rgba(136, 146, 163, 0.45);
+        }
+
+        .map-header::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            background:
+                linear-gradient(90deg,
+                    transparent,
+                    rgba(120, 180, 255, .8),
+                    transparent);
         }
 
         .map-title {
             font-family: 'Baloo 2', sans-serif;
             color: #fff;
             font-weight: 800;
-            font-size: 20px;
+            font-size: 30px;
             letter-spacing: .5px;
             text-align: center;
             margin-top: 10px;
         }
 
-        .node-cookie {
-            border-radius: 50%;
+
+        .pill {
             display: flex;
             align-items: center;
-            justify-content: center;
-            border: 4.5px solid rgba(255, 255, 255, 0.92);
-            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18), inset 0 -4px 6px rgba(0, 0, 0, 0.12);
-        }
-
-        .node-locked {
-            border-radius: 50%;
-            background: #7b7691;
-            border: 4.5px solid rgba(255, 255, 255, 0.7);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: 0.9;
-        }
-
-        .go-badge {
-            padding: 6px 20px;
-            border-radius: 18px;
-            margin-bottom: 6px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            font-family: 'Baloo 2', sans-serif;
-            color: #fff;
+            gap: 6px;
+            background: #fff;
+            padding: 8px 16px;
+            border-radius: 24px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.18);
             font-weight: 900;
-            font-size: 14px;
-            letter-spacing: 1.5px;
-            animation: goBounce 1s ease-in-out infinite;
-        }
-
-        .pin-outer {
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3.5px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            font-family: 'Baloo 2', sans-serif;
+            font-size: 16px;
+            border: none;
             cursor: pointer;
-            animation: pinPop .3s ease-out;
         }
 
-        .pin-avatar-ring {
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
+        .deco-bob {
+            animation: decoBob 2.2s ease-in-out infinite;
+        }
+
+        /* @keyframes goBounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-6px);
+            }
+        } */
+
+        @keyframes decoBob {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+
+        @keyframes spinRing {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes decoSway {
+
+            0%,
+            100% {
+                transform: rotate(-6deg);
+            }
+
+            50% {
+                transform: rotate(6deg);
+            }
+        }
+
+        @keyframes decoSpin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes decoPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+
+            50% {
+                transform: scale(1.12);
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -524,7 +577,7 @@
         const { useState, useEffect, useRef, useCallback, useMemo } = React;
         const token = localStorage.getItem("token");
         const api = axios.create({
-            baseURL: apiBaseUrl + "/api",
+            baseURL: apiBaseUrl,
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
@@ -606,12 +659,9 @@
             win: new Audio("https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3")
         };
 
-        let soundEnabled = true;
-        function setSoundEnabled(value) {
-            soundEnabled = value;
-        }
+        const soundState = { enabled: true };
         function playSound(name) {
-            if (!soundEnabled) return;
+            if (!soundState.enabled) return;
             const sound = SOUNDS[name];
             if (!sound) return;
             sound.currentTime = 0;
@@ -1185,39 +1235,6 @@
             );
         }
 
-        // function chooseBotMove(tokens, color, dice) {
-        //     const movable = getMovableTokenIds(tokens, color, dice);
-        //     if (movable.length === 0) return null;
-        //     if (movable.length === 1) return movable[0];
-
-        //     const withResult = movable.map(id => {
-        //         const token = tokens.find(t => t.id === id);
-        //         const newPos = token.pos === -1 ? 0 : token.pos + dice;
-        //         return { id, token, newPos };
-        //     });
-
-        //     // 1. Prefer a capture
-        //     const captureMove = withResult.find(({ newPos }) => {
-        //         if (newPos < 0 || newPos > 50) return false;
-        //         const globalIdx = (START_OFFSET[color] + newPos) % 52;
-        //         if (SAFE_GLOBAL.includes(globalIdx)) return false;
-        //         return tokens.some(t =>
-        //             t.color !== color &&
-        //             t.pos >= 0 && t.pos <= 50 &&
-        //             (START_OFFSET[t.color] + t.pos) % 52 === globalIdx
-        //         );
-        //     });
-        //     if (captureMove) return captureMove.id;
-
-        //     // 2. Prefer finishing a token
-        //     const finishMove = withResult.find(({ newPos }) => newPos === 56);
-        //     if (finishMove) return finishMove.id;
-
-        //     // 3. Prefer moving the furthest-along token
-        //     const sorted = [...withResult].sort((a, b) => b.token.pos - a.token.pos);
-        //     return sorted[0].id;
-        // }
-
         function describeMoves(tokens, color, dice) {
             const movableIds = getMovableTokenIds(tokens, color, dice);
             return movableIds.map(id => {
@@ -1461,9 +1478,17 @@
             BOT_LEVELS.WARM_UP, BOT_LEVELS.BEGINNER, BOT_LEVELS.EASY, BOT_LEVELS.MEDIUM,
             BOT_LEVELS.HARD, BOT_LEVELS.EXPERT, BOT_LEVELS.MASTER, BOT_LEVELS.LEGEND
         ];
+
+        // difficulty update after 7 level
+        // function difficultyForLevel(lvl) {
+        //     const bandSize = Math.ceil(TOTAL_LEVELS_CONST / DIFFICULTY_LADDER.length);
+        //     const idx = Math.min(DIFFICULTY_LADDER.length - 1, Math.floor((lvl - 1) / bandSize));
+        //     return DIFFICULTY_LADDER[idx];
+        // }
+
+        //difficulty update on each level 
         function difficultyForLevel(lvl) {
-            const bandSize = Math.ceil(TOTAL_LEVELS_CONST / DIFFICULTY_LADDER.length);
-            const idx = Math.min(DIFFICULTY_LADDER.length - 1, Math.floor((lvl - 1) / bandSize));
+            const idx = (lvl - 1) % DIFFICULTY_LADDER.length;
             return DIFFICULTY_LADDER[idx];
         }
         const TOTAL_LEVELS_CONST = 50;
@@ -1499,7 +1524,7 @@
                     return mediumMove(tokens, color, dice);
             }
         }
-        function GameScreen({ setScreen, players }) {
+        function GameScreen({ setScreen, players, soundOn, toggleSound, onLevelComplete, onExit }) {
             const ACTIVE_COLORS = players.map(p => p.color);
             const [tokens, setTokens] = useState(() => createInitialTokens(ACTIVE_COLORS));
             const [currentTurnIdx, setCurrentTurnIdx] = useState(0);
@@ -1515,16 +1540,11 @@
                     return obj;
                 }, {})
             );
-            const [winner, setWinner] = useState(null);
             const [movingToken, setMovingToken] = useState(null);
             const [sixCount, setSixCount] = useState(0);
-            const [soundOn, setSoundOn] = useState(true);
-
-            const toggleSound = () => {
-                const next = !soundOn;
-                setSoundOn(next);
-                setSoundEnabled(next);
-            };
+            const humanColor = players.find(p => !p.isBot)?.color;
+            const [winner, setWinner] = useState(null);
+            const [hasFiredCompletion, setHasFiredCompletion] = useState(false);
 
             function getMovePath(token, steps) {
                 const path = [];
@@ -1564,9 +1584,13 @@
                 }
             }
 
-            const onExit = () => {
-                setScreen("home");
-            };
+            useEffect(() => {
+                if (!winner || hasFiredCompletion) return;
+                if (winner === humanColor) {
+                    setHasFiredCompletion(true);
+                    onLevelComplete();
+                }
+            }, [winner, humanColor, hasFiredCompletion, onLevelComplete]);
 
             const handleRoll = () => {
                 if (diceState[currentColor].rolling || hasRolled || movingToken) return;
@@ -1732,49 +1756,377 @@
         /* ═══════════════════════ CANDY-CRUSH STYLE LEVEL MAP START ═══════════════════════ */
 
         const TOTAL_LEVELS = 50;
-        const NODE_R = 30;
-        const V_GAP = 92;
-        const TOP_PAD = 50;
-        const BOT_PAD = 140;
-        const MAP_W = 480;
+        const NODE_R = 50;
+        const V_GAP = 140;
+        const TOP_PAD = 100;
+        const BOT_PAD = 180;
+        const MAP_W = 1080;
         const MAP_H = TOP_PAD + (TOTAL_LEVELS - 1) * V_GAP + NODE_R + BOT_PAD;
 
-        const SX = [0.50, 0.30, 0.20, 0.30, 0.50, 0.70, 0.80, 0.70];
+        const SX = [0.18, 0.82, 0.25, 0.78, 0.15, 0.85, 0.22, 0.80];
+        // const SX = [0.20, 0.80, 0.20, 0.80, 0.20, 0.80, 0.20, 0.80];
         const nx = (i) => SX[i % SX.length] * MAP_W;
         const ny = (i) => TOP_PAD + (TOTAL_LEVELS - 1 - i) * V_GAP + NODE_R;
 
-        // Rotating band palette — a "biome" every 5 levels, echoing the candy-crush trail look
-        const BAND_COLORS = [
-            { sky: ["#241542", "#3d2472"], accent: "#df2d2d" },
-            { sky: ["#2a1750", "#4a2b7a"], accent: "#0b8b22" },
-            { sky: ["#1c1440", "#34206b"], accent: "#ffd400" },
-            { sky: ["#241542", "#43277a"], accent: "#1d88e5" },
-            { sky: ["#2a1750", "#4a2b7a"], accent: "#df2d2d" },
-            { sky: ["#1c1440", "#34206b"], accent: "#0b8b22" },
-            { sky: ["#241542", "#43277a"], accent: "#ffd400" },
-            { sky: ["#2a1750", "#4a2b7a"], accent: "#1d88e5" },
-            { sky: ["#1c1440", "#34206b"], accent: "#df2d2d" },
-            { sky: ["#241542", "#3d2472"], accent: "#1d88e5" },
-        ];
-        const BAND_SIZE = 5;
-        const getBand = (levelIndex) => BAND_COLORS[Math.floor(levelIndex / BAND_SIZE) % BAND_COLORS.length];
+        function buildSmoothPath(positions) {
+            if (positions.length < 2) return "";
+            let d = `M ${positions[0].x} ${positions[0].y}`;
+            for (let i = 1; i < positions.length; i++) {
+                const p0 = positions[i - 1];
+                const p1 = positions[i];
+                const dy = p1.y - p0.y;
+                const cp1x = p0.x;
+                const cp1y = p0.y + dy * 0.75;
+                const cp2x = p1.x;
+                const cp2y = p0.y + dy * 0.25;
+                d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
+            }
+            return d;
+        }
 
-        function InfoCard({ icon, label, value }) {
+        function TrailPath({ positions }) {
+            const pathD = useMemo(() => buildSmoothPath(positions), [positions]);
+            const TRAIL_COLOR = "#384c9e";
             return (
-                <div className="flex-1 bg-white/15 backdrop-blur-md rounded-2xl px-3 py-2 border border-white/20 shadow-lg">
-                    <div className="flex justify-center gap-2 text-yellow-300 text-sm font-semibold">
-                        <span>{icon}</span>
-                        <span>{label}</span>
+                <svg
+                    width={MAP_W}
+                    height={MAP_H}
+                    style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+                >
+                    <defs>
+                        <filter id="trailGlow" x="-60%" y="-60%" width="220%" height="220%">
+                            <feGaussianBlur stdDeviation="8" result="blur" />
+                            <feMerge>
+                                <feMergeNode in="blur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <path d={pathD} fill="none" stroke={TRAIL_COLOR} strokeWidth="28"
+                        strokeLinecap="round" />
+                </svg>
+            );
+        }
+
+        function TrailSparkles({ positions }) {
+            const sparkles = useMemo(() => {
+                const pts = [];
+                for (let i = 1; i < positions.length; i++) {
+                    const p0 = positions[i - 1];
+                    const p1 = positions[i];
+                    for (let s = 0; s < 4; s++) {
+                        const t = (s + 1) / 5;
+                        const x = p0.x + (p1.x - p0.x) * t + (Math.random() - 0.5) * 18;
+                        const y = p0.y + (p1.y - p0.y) * t + (Math.random() - 0.5) * 18;
+                        pts.push({ x, y, size: 1.5 + Math.random() * 2.5, key: `${i}-${s}` });
+                    }
+                }
+                return pts;
+            }, [positions]);
+
+            return (
+                <>
+                    {sparkles.map(pt => (
+                        <div
+                            key={pt.key}
+                            style={{
+                                position: "absolute",
+                                left: pt.x,
+                                top: pt.y,
+                                width: pt.size,
+                                height: pt.size,
+                                borderRadius: "50%",
+                                background: "#eaf6ff",
+                                boxShadow: "0 0 6px 2px rgba(140,200,255,0.9)",
+                                opacity: 0.85,
+                                pointerEvents: "none",
+                            }}
+                        />
+                    ))}
+                </>
+            );
+        }
+
+        function LevelNode({ lvl, cx, cy, status, accent, onPress }) {
+            const isLocked = status === "locked";
+            const isCurrent = status === "current";
+            const isCompleted = status === "completed";
+            return (
+                <div
+                    style={{
+                        position: "absolute",
+                        left: cx - NODE_R,
+                        top: cy - NODE_R,
+                        width: NODE_R * 2,
+                        height: NODE_R * 2,
+                        cursor: isLocked ? "default" : "pointer",
+                    }}
+                    onClick={() => !isLocked && onPress()}
+                >
+                    {/* rotating ring — only for current */}
+                    {isCurrent && (
+                        <div
+                            style={{
+                                position: "absolute",
+                                inset: -14,
+                                borderRadius: "50%",
+                                animation: "spinRing 4s linear infinite",
+                                opacity: 0.8,
+                            }}
+                        />
+                    )}
+
+                    {/* glow ring behind the dice image */}
+                    <div
+                        className={isCurrent ? "deco-bob" : ""}
+                        style={{ position: "relative", width: "100%", height: "100%" }}
+                    >
+                        <div
+                            style={{
+                                position: "absolute",
+                                inset: -8,
+                                borderRadius: "50%",
+                                boxShadow: isLocked
+                                    ? "none"
+                                    : isCompleted
+                                        ? `0 0 16px 3px ${accent}77, 0 0 0 3px ${accent}55`
+                                        : `0 0 22px 5px ${accent}99, 0 0 0 3px ${accent}55`,
+                                background: isLocked ? "rgba(80,80,100,0.3)" : "transparent",
+                                animation: isCurrent ? "goBounce 1.4s ease-in-out infinite" : "none",
+                            }}
+                        />
+
+                        {/* dice image */}
+                        <img
+                            src="dice2.png"
+                            alt={`Level ${lvl}`}
+                            style={{
+                                position: "relative",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "contain",
+                                opacity: isLocked ? 0.5 : isCompleted ? 0.85 : 1,
+                                transform: isCompleted ? "scale(0.92)" : "scale(1)",
+                                filter: isLocked ? "grayscale(0.6)" : "none",
+                                transition: "transform 0.3s ease",
+                            }}
+                        />
                     </div>
-                    <div className="mt-1 text-white text-xl font-extrabold">
-                        {value}
-                    </div>
+                    {isLocked && (
+                        <span
+                            style={{
+                                position: "absolute",
+                                inset: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 16,
+                            }}
+                        >
+                            🔒
+                        </span>
+                    )}
+
+                    {isCompleted && (
+                        <div
+                            style={{
+                                position: "absolute",
+                                bottom: -4,
+                                right: -4,
+                                width: 22,
+                                height: 22,
+                                borderRadius: "50%",
+                                background: "#1f7a4d",
+                                border: "2px solid white",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 12,
+                                color: "white",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                            }}
+                        >
+                            ✓
+                        </div>
+                    )}
                 </div>
             );
         }
 
-        function MapHeader({ score = 100, coins = 20, highestLevel = 1 }) {
+        function DecoPawnRed({ size = 64 }) {
+            return <img src="red_token.png" style={{ width: size, height: size, objectFit: "contain" }} />;
+        }
+        function DecoPawnBlue({ size = 64 }) {
+            return <img src="blue_token.png" style={{ width: size, height: size, objectFit: "contain" }} />;
+        }
+        function DecoPawnGreen({ size = 64 }) {
+            return <img src="green_token.png" style={{ width: size, height: size, objectFit: "contain" }} />;
+        }
+        function DecoPawnYellow({ size = 64 }) {
+            return <img src="yellow_token.png" style={{ width: size, height: size, objectFit: "contain" }} />;
+        }
+        function DecoDice({ size = 56 }) {
+            return <img src="dice3.png" style={{ width: size, height: size, objectFit: "contain" }} />;
+        }
+        function DecoDice1({ size = 56 }) {
+            return <img src="dice3.png" style={{ width: size, height: size, objectFit: "contain" }} />;
+        }
+        function DecoGift({ size = 64 }) {
+            return <img src="Gift.avif" style={{ width: size, height: size, objectFit: "contain" }} />;
+        }
+        function DecoStar3D({ size = 40 }) {
+            return (
+                <svg viewBox="0 0 100 100" width={size} height={size}>
+                    <defs>
+                        <linearGradient id={`starGrad${size}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#fff3b0" />
+                            <stop offset="45%" stopColor="#ffd76a" />
+                            <stop offset="100%" stopColor="#e0a91f" />
+                        </linearGradient>
+                    </defs>
+                    <polygon
+                        points="50,4 61,36 96,36 68,57 78,92 50,71 22,92 32,57 4,36 39,36"
+                        fill={`url(#starGrad${size})`}
+                        stroke="#c98a10"
+                        strokeWidth="2"
+                    />
+                    <polygon points="50,14 57,38 50,50 43,38" fill="#fff8dd" opacity="0.7" />
+                </svg>
+            );
+        }
+
+        const DECO_RENDERERS = {
+            tokenRed: function (size) { return <DecoPawnRed size={size} />; },
+            tokenBlue: function (size) { return <DecoPawnBlue size={size} />; },
+            tokenGreen: function (size) { return <DecoPawnGreen size={size} />; },
+            tokenYellow: function (size) { return <DecoPawnYellow size={size} />; },
+            dice: function (size) { return <DecoDice size={size} />; },
+            dice1: function (size) { return <DecoDice1 size={size} />; },
+            gift: function (size) { return <DecoGift size={size} />; },
+        };
+
+        const LEFT_RIGHT_TYPES = ["tokenRed", "tokenBlue", "tokenGreen", "tokenYellow", "dice", "dice1"];
+        const LEFT_RIGHT_SLOTS = [0.06, 0.94];
+        const GIFT_SLOTS = [0.34, 0.66];
+
+        function shuffleArray(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const tmp = a[i];
+                a[i] = a[j];
+                a[j] = tmp;
+            }
+            return a;
+        }
+
+        function buildDecorations(positions, mapW) {
+            const items = [];
+            const stars = [];
+
+            let leftRightPool = shuffleArray(LEFT_RIGHT_TYPES);
+            let lrPtr = 0;
+            function nextLeftRight() {
+                if (lrPtr >= leftRightPool.length) {
+                    leftRightPool = shuffleArray(LEFT_RIGHT_TYPES);
+                    lrPtr = 0;
+                }
+                const val = leftRightPool[lrPtr];
+                lrPtr = lrPtr + 1;
+                return val;
+            }
+
+            let bandCount = Math.ceil(positions.length / 3);
+            for (let band = 0; band < bandCount; band++) {
+                const i = band * 3;
+                if (i >= positions.length) break;
+                const y = positions[i].y;
+
+                const side = (band % 2 === 0) ? LEFT_RIGHT_SLOTS[0] : LEFT_RIGHT_SLOTS[1];
+                const isGiftBand = (band % 5 === 0);
+                const slotFrac = isGiftBand
+                    ? GIFT_SLOTS[Math.floor(Math.random() * GIFT_SLOTS.length)]
+                    : side;
+                const rendererKey = isGiftBand ? "gift" : nextLeftRight();
+
+                items.push({
+                    key: "deco-lr-" + band,
+                    x: slotFrac * mapW + (Math.random() - 0.5) * 16,
+                    y: y + (Math.random() - 0.5) * 30,
+                    size: 70 + Math.floor(Math.random() * 24),
+                    rendererKey: rendererKey,
+                    rotate: (Math.random() - 0.5) * 14,
+                    duration: 2.4 + Math.random() * 1.4,
+                    delay: Math.random() * 2,
+                });
+
+                for (let s = 0; s < 2; s++) {
+                    const slot = LEFT_RIGHT_SLOTS[s % 2];
+                    const sign = (s % 2 === 0) ? 1 : -1;
+                    stars.push({
+                        key: "star-" + band + "-" + s,
+                        x: slot * mapW + (Math.random() - 0.5) * 70 * sign,
+                        y: y + (Math.random() - 0.5) * 60,
+                        size: 30 + Math.random() * 20,
+                    });
+                }
+            }
+            return { items: items, stars: stars };
+        }
+
+        function MapDecorations({ positions, mapW }) {
+            const built = useMemo(function () { return buildDecorations(positions, mapW); }, [positions, mapW]);
+            const items = built.items;
+            const stars = built.stars;
+
+            return (
+                <>
+                    {items.map(function (d) {
+                        const renderFn = DECO_RENDERERS[d.rendererKey];
+                        if (!renderFn) return null;
+                        return (
+                            <div
+                                key={d.key}
+                                style={{
+                                    position: "absolute",
+                                    left: d.x,
+                                    top: d.y,
+                                    transform: "translate(-50%, -50%) rotate(" + d.rotate + "deg)",
+                                    animation: "decoBob " + d.duration + "s ease-in-out " + d.delay + "s infinite",
+                                    pointerEvents: "none",
+                                    zIndex: 1,
+                                    filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.18))",
+                                }}
+                            >
+                                {renderFn(d.size)}
+                            </div>
+                        );
+                    })}
+                    {stars.map(function (s) {
+                        return (
+                            <div
+                                key={s.key}
+                                style={{
+                                    position: "absolute",
+                                    left: s.x,
+                                    top: s.y,
+                                    transform: "translate(-50%, -50%)",
+                                    animation: "decoPulse 2.6s ease-in-out infinite",
+                                    pointerEvents: "none",
+                                    zIndex: 1,
+                                }}
+                            >
+                                <DecoStar3D size={s.size} />
+                            </div>
+                        );
+                    })}
+                </>
+            );
+        }
+        function MapHeaderBar({ soundOn, toggleSound, score, coins, highestCompleted, totalLevels, onExit }) {
             const { t } = useTranslation();
+            const pct = Math.min(100, Math.round((highestCompleted / totalLevels) * 100));
+
             const [showRewardPopup, setShowRewardPopup] = useState(false);
             const [loadingRewardHistory, setLoadingRewardHistory] = useState(false);
             const [rewardHistory, setRewardHistory] = useState([]);
@@ -1784,13 +2136,13 @@
             const [socreHistory, setScoreHistory] = useState([]);
 
             const fetchTransactionHistory = async () => {
-                //if (!token) return;
+                if (!token) return;
                 setShowRewardPopup(true);
                 setLoadingRewardHistory(true);
                 try {
                     const res = await api.get("/api/game/getTransactionHistory?type=Game");
                     const history = res.data?.result?.result?.filter(
-                        item => item.description === "cross-word"
+                        item => item.description === "ludo-game"
                     ) || [];
                     const sorted = history.sort(
                         (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
@@ -1826,28 +2178,59 @@
                     setLoadingScoreHistory(false);
                 }
             };
+
             return (
-                <>
-                    <div className="flex justify-between gap-3 mt-4">
-                        <button onClick={fetchTransactionHistory}>
-                            <InfoCard
-                                icon={<i className="fa-solid fa-coins"></i>}
-                                label="Coins"
-                                value={coins}
-                            />
-                        </button>
-                        <InfoCard
-                            label="Highest Level"
-                            value={highestLevel}
-                        />
-                        <button onClick={getUserGameScore}>
-                            <InfoCard
-                                icon={<i className="fa-solid fa-star"></i>}
-                                label="Score"
-                                value={score}
-                            />
-                        </button>
+                <div className="map-header" style={{ background: "linear-gradient(135deg,#3d2472,#5a2f8f)" }}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <button className="icon-btn" onClick={onExit} style={{ width: 50, height: 50, fontSize: 20 }}>
+                                <i className="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <button className="icon-btn" onClick={toggleSound} style={{ width: 50, height: 50, fontSize: 20 }}>
+                                {soundOn ? "🔊" : "🔇"}
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <img src="dice3.png" alt="" style={{ width: 70, height: 70, objectFit: "contain" }} onClick={() => { }} />
+                            <span className="map-title" style={{ marginTop: 20 }}>Ludo Regina</span>
+                            <img src="dice3.png" alt="" style={{ width: 70, height: 70, objectFit: "contain" }} onClick={() => { }} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={getUserGameScore}
+                                className="pill"
+                                style={{ color: "#856404", fontSize: 16, padding: "8px 16px", cursor: "pointer" }}
+                            >
+                                <i className="fa-solid fa-star text-yellow-500"></i> <span>{score}</span>
+                            </button>
+                            <button
+                                onClick={fetchTransactionHistory}
+                                className="pill"
+                                style={{ color: "#856404", fontSize: 16, padding: "8px 16px", cursor: "pointer" }}
+                            >
+                                <i className="fa-solid fa-coins text-yellow-500"></i> <span>{coins}</span>
+                            </button>
+                        </div>
                     </div>
+
+                    <div className="w-full mt-3">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-white/80 text-xs font-semibold">Progress</span>
+                            <span className="text-white text-xs font-bold">{highestCompleted} / {totalLevels}</span>
+                        </div>
+                        <div className="w-full h-3 rounded-full bg-white/15 overflow-hidden">
+                            <div
+                                className="h-full rounded-full"
+                                style={{
+                                    width: `${pct}%`,
+                                    background: "linear-gradient(90deg, #4fa3ff, #7ecbff)",
+                                    transition: "width 0.4s ease",
+                                    boxShadow: "0 0 10px rgba(79,163,255,0.6)"
+                                }}
+                            />
+                        </div>
+                    </div>
+
                     {showRewardPopup && (
                         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-3">
                             <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-800 p-4 sm:p-5 shadow-2xl border border-purple-400/40">
@@ -1857,12 +2240,10 @@
                                             <i className="fa-solid fa-gift text-yellow-300"></i>
                                             {t("Reward_History")}
                                         </h2>
-
                                         <p className="text-indigo-100 text-xs sm:text-sm mt-0.5">
                                             {t("Your_earnings")}
                                         </p>
                                     </div>
-
                                     <button
                                         onClick={() => setShowRewardPopup(false)}
                                         className="text-white/70 hover:text-white text-2xl sm:text-3xl leading-none"
@@ -1875,7 +2256,6 @@
                                         <div className="text-center py-10 text-sm sm:text-lg font-bold">
                                             {t("Loading")}...
                                         </div>
-
                                     ) : rewardHistory.length === 0 ? (
                                         <div className="text-center py-10">
                                             <i className="fa-solid fa-gift text-4xl sm:text-6xl text-white/30 mb-3"></i>
@@ -1896,7 +2276,6 @@
                                                     <p className="text-sm sm:text-lg font-bold text-yellow-300 leading-none">
                                                         {t("Level")} {item.level}
                                                     </p>
-
                                                     <p className="text-[10px] sm:text-xs text-white/70 mt-1">
                                                         {new Date(item.createdAt).toLocaleDateString()}
                                                     </p>
@@ -1981,7 +2360,6 @@
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <i className="fa-solid fa-ranking-star text-yellow-300"></i>
-
                                                         <span className="text-sm sm:text-lg font-bold text-yellow-300">
                                                             {t("Total_Score")}
                                                         </span>
@@ -1998,223 +2376,125 @@
                                         </>
                                     )}
                                 </div>
-
                             </div>
                         </div>
-                    )}
-
-                </>
-            )
-        }
-
-        function buildSmoothPath(positions) {
-            if (positions.length < 2) return "";
-            let d = `M ${positions[0].x} ${positions[0].y}`;
-            for (let i = 1; i < positions.length; i++) {
-                const p0 = positions[i - 1];
-                const p1 = positions[i];
-                const cp1x = p0.x + (p1.x - p0.x) * 0.15;
-                const cp1y = p0.y + (p1.y - p0.y) * 0.5;
-                const cp2x = p0.x + (p1.x - p0.x) * 0.85;
-                const cp2y = p0.y + (p1.y - p0.y) * 0.5;
-                d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`;
-            }
-            return d;
-        }
-
-        function TrailPath({ positions }) {
-            const pathD = useMemo(() => buildSmoothPath(positions), [positions]);
-            const TRAIL_COLOR = "#4fa3ff";
-            return (
-                <svg
-                    width={MAP_W}
-                    height={MAP_H}
-                    style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
-                >
-                    <defs>
-                        <filter id="trailGlow" x="-60%" y="-60%" width="220%" height="220%">
-                            <feGaussianBlur stdDeviation="8" result="blur" />
-                            <feMerge>
-                                <feMergeNode in="blur" />
-                                <feMergeNode in="SourceGraphic" />
-                            </feMerge>
-                        </filter>
-                    </defs>
-                    <path d={pathD} fill="none" stroke={TRAIL_COLOR} strokeWidth="14"
-                        strokeLinecap="round" />
-                </svg>
-            );
-        }
-
-        function TrailSparkles({ positions }) {
-            const sparkles = useMemo(() => {
-                const pts = [];
-                for (let i = 1; i < positions.length; i++) {
-                    const p0 = positions[i - 1];
-                    const p1 = positions[i];
-                    for (let s = 0; s < 4; s++) {
-                        const t = (s + 1) / 5;
-                        const x = p0.x + (p1.x - p0.x) * t + (Math.random() - 0.5) * 18;
-                        const y = p0.y + (p1.y - p0.y) * t + (Math.random() - 0.5) * 18;
-                        pts.push({ x, y, size: 1.5 + Math.random() * 2.5, key: `${i}-${s}` });
-                    }
-                }
-                return pts;
-            }, [positions]);
-
-            return (
-                <>
-                    {sparkles.map(pt => (
-                        <div
-                            key={pt.key}
-                            style={{
-                                position: "absolute",
-                                left: pt.x,
-                                top: pt.y,
-                                width: pt.size,
-                                height: pt.size,
-                                borderRadius: "50%",
-                                background: "#eaf6ff",
-                                boxShadow: "0 0 6px 2px rgba(140,200,255,0.9)",
-                                opacity: 0.85,
-                                pointerEvents: "none",
-                            }}
-                        />
-                    ))}
-                </>
-            );
-        }
-
-        function LevelNode({ lvl, cx, cy, status, accent, onPress }) {
-            const isLocked = status === "locked";
-            const isCurrent = status === "current";
-
-            return (
-                <div
-                    style={{
-                        position: "absolute",
-                        left: cx - NODE_R,
-                        top: cy - NODE_R,
-                        width: NODE_R * 2,
-                        height: NODE_R * 2,
-                        zIndex: isCurrent ? 50 : 10,
-                        cursor: isLocked ? "default" : "pointer",
-                    }}
-                    onClick={() => !isLocked && onPress()}
-                >
-                    {/* glow ring behind the dice image */}
-                    <div
-                        style={{
-                            position: "absolute",
-                            inset: -8,
-                            borderRadius: "50%",
-                            boxShadow: isLocked
-                                ? "none"
-                                : `0 0 22px 5px ${accent}99, 0 0 0 3px ${accent}55`,
-                            background: isLocked ? "rgba(80,80,100,0.3)" : "transparent",
-                            animation: isCurrent ? "goBounce 1.4s ease-in-out infinite" : "none",
-                        }}
-                    />
-                    {/* dice image */}
-                    <img
-                        src="dice2.png"
-                        alt={`Level ${lvl}`}
-                        style={{
-                            position: "relative",
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "contain",
-                            opacity: isLocked ? 0.5 : 1,
-                        }}
-                    />
-                    {isLocked && (
-                        <span
-                            style={{
-                                position: "absolute",
-                                inset: 0,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 16,
-                            }}
-                        >
-                            🔒
-                        </span>
                     )}
                 </div>
             );
         }
 
-        function MapScreen({ highestCompleted, levelStars, onSelectLevel, gold }) {
+        function CurrentLevelFlag({ cx, cy }) {
+            return (
+                <div
+                    style={{
+                        position: "absolute",
+                        left: cx - 18,
+                        top: cy - NODE_R - 64,
+                        pointerEvents: "none",
+                        zIndex: 6,
+                    }}
+                >
+                    <svg viewBox="0 0 60 90" width="46" height="70">
+                        <rect x="26" y="6" width="5" height="80" rx="1" fill="#8a5a28" />
+                        <path d="M31 10 L58 24 L31 38 Z" fill="#0D98BA" stroke="#1f7a4d" strokeWidth="1.5" />
+                    </svg>
+                </div>
+            );
+        }
+
+        function CurrentLevelPopup({ cx, cy, level }) {
+            return (
+                <div
+                    style={{
+                        position: "absolute",
+                        left: cx,
+                        top: cy + NODE_R + 16,
+                        transform: "translateX(-50%)",
+                        pointerEvents: "none",
+                        zIndex: 6,
+                    }}
+                >
+                    <div
+                        style={{
+                            background: "#0D98BA",
+                            borderRadius: 14,
+                            padding: "6px 14px",
+                            fontFamily: "'Baloo 2', sans-serif",
+                            fontWeight: 800,
+                            fontSize: 14,
+                            color: "#000000",
+                            boxShadow: "0 6px 14px rgba(0,0,0,0.25)",
+                            whiteSpace: "nowrap",
+                            position: "relative",
+                        }}
+                    >
+                        <div
+                            style={{
+                                position: "absolute",
+                                left: "50%",
+                                top: -7,
+                                transform: "translateX(-50%)",
+                                width: 0,
+                                height: 0,
+                                borderLeft: "7px solid transparent",
+                                borderRight: "7px solid transparent",
+                                borderBottom: "7px solid #25935c",
+                            }}
+                        />
+                        Level {level}
+                    </div>
+                </div>
+            );
+        }
+        function MapScreen({ highestCompleted, levelStars, onSelectLevel, soundOn, toggleSound, score, coins, highestLevel, onExit }) {
             const scrollRef = useRef(null);
             const currentLevel = Math.min(highestCompleted + 1, TOTAL_LEVELS);
-            const [soundOn, setSoundOn] = useState(soundEnabled);
             const positions = useMemo(() => Array.from({ length: TOTAL_LEVELS }, (_, i) => ({ x: nx(i), y: ny(i) })), []);
 
-            const [resumeLevel, setResumeLevel] = useState(null);
-            useEffect(() => {
-                const fetchResumeLevel = async () => {
-                    if (!token) return;
-                    window.parent.postMessage({ type: "showLoader" }, "*");
-                    try {
-                        const res = await api.get(`/api/game/getResumeLevel?gameId=${offerId}`);
-                        const resumeData = res.data?.result?.data;
-                        if (resumeData && resumeData.currentLevel) {
-                            setResumeLevel(resumeData);
-                        } else {
-                            setResumeLevel(null);
-                        }
-                    } catch (err) {
-                        setResumeLevel(null);
-                        console.log(err.message);
-                    }
-                    window.parent.postMessage({ type: "hideLoader" }, "*");
-                };
-                fetchResumeLevel();
-            }, []);
             useEffect(() => {
                 const nodeY = ny(currentLevel - 1);
                 const target = Math.max(0, nodeY - 320);
                 scrollRef.current?.scrollTo({ top: target, behavior: "auto" });
             }, []);
             const getStatus = (lvl) => lvl <= highestCompleted ? "completed" : lvl === currentLevel ? "current" : "locked";
-            const toggleSound = () => { const next = !soundOn; setSoundOn(next); setSoundEnabled(next); };
             return (
                 <div className="map-outer">
-                    <div className="map-header" style={{ background: "linear-gradient(135deg,#3d2472,#5a2f8f)" }}>
-                        <div className="flex items-center justify-between">
-                            <button className="icon-btn" onClick={toggleSound}>{soundOn ? "🔊" : "🔇"}</button>
-                            <img src="dice2.png" className="dice-icon translate-y-0" alt="" />
-                            <div className="map-title">Ludo Regina</div>
-                            {/*<div className="pill" style={{ color: "#E84393" }}>❤️ <span>5</span></div>
-                       <div className="pill" style={{ color: "#856404" }}>🥇 <span>{gold}</span></div>*/}
-                            <img src="dice2.png" className="dice-icon translate-y-0" alt="" />
-                            <button className="icon-btn">⚙️</button>
-                        </div>
-                        <div>
-                            <MapHeader
-                                resumeLevel={resumeLevel} />
-                        </div>
-                    </div>
-
+                    <MapHeaderBar
+                        soundOn={soundOn}
+                        toggleSound={toggleSound}
+                        score={score}
+                        coins={coins}
+                        highestCompleted={highestCompleted}
+                        totalLevels={TOTAL_LEVELS}
+                        onExit={onExit}
+                    />
                     <div className="map-scroll" ref={scrollRef}>
                         <div style={{ position: "relative", width: MAP_W, height: MAP_H, margin: "0 auto" }}>
                             <TrailPath positions={positions} />
                             <TrailSparkles positions={positions} />
+                            <MapDecorations positions={positions} mapW={MAP_W} />
+
                             {positions.map((p, i) => {
                                 const lvl = i + 1;
-                                const band = getBand(i);
                                 const status = getStatus(lvl);
+                                const accent = status === "current" ? "#7ecbff" : "#4fa3ff";
                                 return (
-                                    <LevelNode
-                                        key={lvl}
-                                        lvl={lvl}
-                                        cx={p.x}
-                                        cy={p.y}
-                                        status={status}
-                                        accent={band.accent}
-                                        onPress={() => { if (status !== "locked") onSelectLevel(lvl); }}
-                                    />
+                                    <React.Fragment key={lvl}>
+                                        <LevelNode
+                                            lvl={lvl}
+                                            cx={p.x}
+                                            cy={p.y}
+                                            status={status}
+                                            accent={accent}
+                                            onPress={() => { if (status !== "locked") onSelectLevel(lvl); }}
+                                        />
+                                        {status === "current" && (
+                                            <>
+                                                <CurrentLevelFlag cx={p.x} cy={p.y} />
+                                                <CurrentLevelPopup cx={p.x} cy={p.y} level={lvl} />
+                                            </>
+                                        )}
+                                    </React.Fragment>
                                 );
                             })}
                         </div>
@@ -2281,7 +2561,7 @@
                     players.push({
                         color: TWO_PLAYER_MAP[humanColor],
                         isBot: true,
-                        difficulty: BOT_LEVELS.WARM_UP,
+                        difficulty: null,
                         name: "Bot"
                     });
                 } else {
@@ -2289,7 +2569,7 @@
                         players.push({
                             color: remaining[i],
                             isBot: true,
-                            difficulty: BOT_LEVELS.WARM_UP,
+                            difficulty: null,
                             name: `Bot ${i + 1}`
                         });
 
@@ -2385,9 +2665,12 @@
             const [screen, setScreen] = useState("map");
             const [players, setPlayers] = useState(null);
 
+            const [soundOn, setSoundOn] = useState(true);
+
             const [score, setScore] = useState(0);
             const [coins, setCoins] = useState(0);
             const [highestLevel, setHighestLevel] = useState(1);
+            const [resumeLoaded, setResumeLoaded] = useState(false);
 
             const [isGuest, setIsGuest] = useState(false);
             const [hasRated, setHasRated] = useState(false);
@@ -2403,6 +2686,31 @@
             const [surveyError, setSurveyError] = useState(null);
             const [isNavigatingToSurvey, setIsNavigatingToSurvey] = useState(false);
             const [surveyType, setSurveyType] = useState(null);
+
+            const [showLevelCompletePopup, setShowLevelCompletePopup] = useState(false);
+            const [completingLevel, setCompletingLevel] = useState(false);
+
+            useEffect(() => {
+                const loadResume = async () => {
+                    if (!token) { setResumeLoaded(true); return; }
+                    try {
+                        const res = await api.get(`/api/game/getResumeLevel?gameId=${offerId}`);
+                        const resumeData = res.data?.result?.data;
+                        if (resumeData?.currentLevel) {
+                            setHighestCompleted(Math.max(0, resumeData.currentLevel - 1));
+                            setActiveLevel(resumeData.currentLevel);
+                            if (resumeData.metadata?.score != null) setScore(resumeData.metadata.score);
+                            if (resumeData.metadata?.coins != null) setCoins(resumeData.metadata.coins);
+                            if (resumeData.highestLevel != null) setHighestLevel(resumeData.highestLevel);
+                        }
+                    } catch (err) {
+                        console.log("Resume fetch error:", err.message);
+                    } finally {
+                        setResumeLoaded(true);
+                    }
+                };
+                loadResume();
+            }, []);
 
             const fetchSurveys = async () => {
                 setLoadingSurveys(true);
@@ -2558,20 +2866,61 @@
                 }
             };
 
+            const handleLevelComplete = async () => {
+                setCompletingLevel(true);
+                try {
+                    const finishedLevel = activeLevel;
+                    const finishedDifficulty = difficultyForLevel(finishedLevel);
+                    const nextLevel = Math.min(finishedLevel + 1, TOTAL_LEVELS);
+                    const nextDifficulty = difficultyForLevel(nextLevel);
+
+                    const completion = Math.round((finishedLevel / TOTAL_LEVELS) * 100);
+
+                    await levelProgress({ level: finishedLevel, difficulty: finishedDifficulty }, 1, coins);
+                    await startGameSession({ level: nextLevel, difficulty: nextDifficulty }, coins, score, { level: nextLevel });
+                    await gameProgress(completion, coins, score);
+
+                    setHighestCompleted(prev => Math.max(prev, finishedLevel));
+                    setLevelStars(prev => ({ ...prev, [finishedLevel]: prev[finishedLevel] || (2 + Math.round(Math.random())) }));
+                    setShowLevelCompletePopup(true);
+                } catch (err) {
+                    console.log("Level completion error:", err);
+                } finally {
+                    setCompletingLevel(false);
+                }
+            };
+
             const gamePlayers = useMemo(() => {
                 if (!players) return players;
                 const difficulty = difficultyForLevel(activeLevel);
                 return players.map(p => p.isBot ? { ...p, difficulty } : p);
             }, [players, activeLevel]);
 
-            const startLevel = (lvl) => {
-                setActiveLevel(Math.min(lvl, TOTAL_LEVELS));
+            const startLevel = async (lvl) => {
+                const nextLevel = Math.min(lvl, TOTAL_LEVELS);
+                const difficulty = difficultyForLevel(nextLevel);
+                const levelData = { level: nextLevel, difficulty };
+                setActiveLevel(nextLevel);
                 setScreen("game");
+                await startGameSession(levelData, coins, score);
+                await levelProgress(levelData, 0, coins);
             };
 
             const handleLevelWon = (lvl) => {
                 setHighestCompleted(prev => Math.max(prev, lvl));
                 setLevelStars(prev => ({ ...prev, [lvl]: prev[lvl] || (2 + Math.round(Math.random())) }));
+            };
+
+            const toggleSound = () => {
+                setSoundOn(prev => {
+                    const next = !prev;
+                    soundState.enabled = next;
+                    return next;
+                });
+            };
+
+            const onExit = () => {
+                setScreen("home");
             };
 
             return (
@@ -2588,11 +2937,37 @@
                                 highestCompleted={highestCompleted}
                                 levelStars={levelStars}
                                 onSelectLevel={startLevel}
+                                soundOn={soundOn}
+                                toggleSound={toggleSound}
+                                score={score}
+                                coins={coins}
+                                highestLevel={highestLevel}
+                                onExit={onExit}
                             />
                         )}
                         {screen === "game" && gamePlayers && (
-                            <GameScreen setScreen={setScreen} players={players} level={activeLevel} />
+                            <GameScreen
+                                setScreen={setScreen}
+                                players={gamePlayers}
+                                level={activeLevel}
+                                soundOn={soundOn}
+                                toggleSound={toggleSound}
+                                onLevelComplete={handleLevelComplete}
+                                onExit={onExit}
+                            />
                         )};
+                        {showLevelCompletePopup && (
+                            <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
+                                <div className="winner-card">
+                                    <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: "26px", fontWeight: 800, marginBottom: "8px" }}>
+                                        Level {activeLevel} Complete! 🎉
+                                    </h2>
+                                    <button className="start-btn" onClick={() => { setShowLevelCompletePopup(false); setScreen("map"); }}>
+                                        Continue
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     {showSurvey && (
                         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[300] p-4">
