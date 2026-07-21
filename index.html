@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Ludo Rex — Play Online</title>
+    <title>Ludo Regina</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
@@ -16,12 +13,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/i18next@23/i18next.min.js"></script>
-    <script
-        src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@7/i18nextBrowserLanguageDetector.min.js"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
-        const apiBaseUrl = "http://localhost:7877";
+        const apiBaseUrl = params.get("apiBaseUrl");
+        //const apiBaseUrl = "http://localhost:7877";
     </script>
     <style>
         :root {
@@ -42,28 +38,23 @@
             --icon-btn-size: clamp(36px, 9vw, 44px);
             --panel-gap: clamp(42px, 9vw, 48px);
         }
-
         @media (min-width: 768px) {
             :root {
                 --shell-width: min(80vw, 640px);
             }
         }
-
         @media (min-width: 1024px) {
             :root {
                 --shell-width: 640px;
             }
         }
-
         * {
             box-sizing: border-box;
         }
-
         html,
         body {
             height: 100%;
         }
-
         .board-shell {
             box-shadow: var(--shadow-lg);
             margin-top: var(--panel-gap);
@@ -71,7 +62,6 @@
             display: flex;
             justify-content: center;
         }
-
         .panel-card {
             background: var(--cream);
             border-radius: 20px;
@@ -79,7 +69,20 @@
             box-shadow: var(--shadow-lg);
             border: 1px solid rgba(255, 255, 255, 0.35);
         }
-
+        .power-btn {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 4px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,.25);
+            transition: .2s;
+        }
+        .power-btn:hover {
+            transform: scale(1.06);
+        }
         .winner-card {
             background: var(--cream);
             border-radius: 26px;
@@ -88,7 +91,6 @@
             box-shadow: var(--shadow-lg);
             width: min(90vw, 380px);
         }
-
         .board {
             width: 100%;
             height: 100%;
@@ -104,7 +106,6 @@
             border-radius: 25px;
             margin: 0 auto;
         }
-
         .cell {
             position: relative;
             border: 0.5px solid var(--board-line);
@@ -112,18 +113,15 @@
             align-items: center;
             justify-content: center;
         }
-
         .cell.path {
             background: var(--paper);
         }
-
         .cell.safe::before {
             content: '★';
             position: absolute;
             font-size: 160%;
             color: rgba(43, 38, 32, 0.38);
         }
-
         .token {
             width: 70%;
             height: 70%;
@@ -138,35 +136,28 @@
             transition: left .28s cubic-bezier(.4, 1.4, .6, 1), top .28s cubic-bezier(.4, 1.4, .6, 1), transform .15s ease;
             z-index: 5;
         }
-
         .token.movable {
             animation: tokenPulse 1s ease-in-out infinite;
             cursor: pointer;
         }
-
         .token.movable:hover {
             transform: scale(1.15);
         }
-
         .dice3d.can-roll {
             animation: diceIdle 1.8s ease-in-out infinite;
         }
-
         .dice3d.rolling {
             animation: diceRoll 0.55s ease-in-out;
         }
-
         .dice-wrap {
             perspective: 500px;
         }
-
         .dice-cube {
             position: relative;
             width: var(--dice-size);
             height: var(--dice-size);
             transform-style: preserve-3d;
         }
-
         .dice-face {
             position: absolute;
             width: var(--dice-size);
@@ -178,60 +169,46 @@
             align-items: center;
             justify-content: center;
         }
-
         .dice-face svg {
             width: 80%;
             height: 80%;
         }
-
         .dice-face.front {
             transform: translateZ(calc(var(--dice-size) / 1.667));
         }
-
         .dice-face.back {
             transform: rotateY(180deg) translateZ(calc(var(--dice-size) / 1.667));
         }
-
         .dice-face.right {
             transform: rotateY(90deg) translateZ(calc(var(--dice-size) / 1.667));
         }
-
         .dice-face.left {
             transform: rotateY(-90deg) translateZ(calc(var(--dice-size) / 1.667));
         }
-
         .dice-face.top {
             transform: rotateX(90deg) translateZ(calc(var(--dice-size) / 1.667));
         }
-
         .dice-face.bottom {
             transform: rotateX(-90deg) translateZ(calc(var(--dice-size) / 1.667));
         }
-
         @keyframes tokenPulse {
-
             0%,
             100% {
                 box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 0 rgba(255, 255, 255, 0.6);
             }
-
             50% {
                 box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), inset 0 2px 2px rgba(255, 255, 255, 0.5), 0 0 0 6px rgba(255, 255, 255, 0);
             }
         }
-
         @keyframes diceIdle {
-
             0%,
             100% {
                 transform: translateY(0) rotate(0deg);
             }
-
             50% {
                 transform: translateY(-4px) rotate(-4deg);
             }
         }
-
         .app {
             background-image: url("ludo_bg.png");
             background-position: center;
@@ -246,7 +223,6 @@
             min-height: 100dvh;
             padding: 0;
         }
-
         .home::before,
         .game::before {
             content: "";
@@ -256,7 +232,6 @@
             background-size: cover;
             z-index: 0;
         }
-
         .home {
             position: relative;
             width: var(--shell-width);
@@ -277,7 +252,6 @@
                 inset 0 0 120px rgba(255, 255, 255, .03);
             overflow: hidden;
         }
-
         .home-title {
             font-size: clamp(30px, 7vw, 52px);
             font-weight: 500;
@@ -289,7 +263,6 @@
                 0 0 18px #9c7cff,
                 0 0 35px #7d5cff;
         }
-
         .title-row {
             display: inline-flex;
             align-items: center;
@@ -298,27 +271,23 @@
             margin: 0 auto;
             flex-wrap: wrap;
         }
-
         .dice-icon {
             width: clamp(36px, 9vw, 60px);
             height: clamp(36px, 9vw, 60px);
             object-fit: contain;
             transform: translateY(clamp(10px, 2.5vw, 20px));
         }
-
         .home-subtitle {
             margin-top: -1px;
             color: #ddd;
             font-size: clamp(16px, 4vw, 26px);
         }
-
         .home-panel {
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-
         .section-title {
             color: #42d8ff;
             font-size: clamp(22px, 5vw, 34px);
@@ -328,7 +297,6 @@
             text-shadow: 0 0 18px #3fd6ff;
             text-align: center;
         }
-
         .mode-card {
             height: clamp(84px, 14vw, 120px);
             border-radius: 22px;
@@ -341,17 +309,14 @@
             transition: .25s;
             width: 100%;
         }
-
         .mode-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 0 35px #8d71ff;
         }
-
         .mode-card.active {
             border-color: #6adfff;
             box-shadow: 0 0 25px #54dbff;
         }
-
         .color-circle {
             width: clamp(52px, 12vw, 72px);
             height: clamp(52px, 12vw, 72px);
@@ -363,13 +328,11 @@
             transition: .25s;
             box-shadow: 0 0 18px rgba(255, 255, 255, .2);
         }
-
         .color-circle.active {
             transform: scale(1.08);
             border-color: white;
             box-shadow: 0 0 25px currentColor;
         }
-
         .start-btn {
             width: 90%;
             height: clamp(50px, 11vw, 60px);
@@ -392,20 +355,17 @@
                 transform .2s,
                 box-shadow .25s;
         }
-
         .start-btn:hover {
             transform: translateY(-2px);
             box-shadow:
                 0 16px 36px rgba(91, 86, 255, .55),
                 inset 0 2px 1px rgba(255, 255, 255, .35);
         }
-
         .start-btn:active {
             transform: translateY(1px);
             box-shadow:
                 0 8px 20px rgba(91, 86, 255, .35);
         }
-
         .game {
             position: relative;
             width: var(--shell-width);
@@ -418,7 +378,6 @@
                 0 0 80px rgba(0, 0, 0, .6),
                 inset 0 0 120px rgba(255, 255, 255, .03);
         }
-
         .game-header-bar {
             width: 100%;
             display: flex;
@@ -433,13 +392,11 @@
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
             box-sizing: border-box;
         }
-
         .home>*,
         .game>* {
             position: relative;
             z-index: 1;
         }
-
         @media (max-width: 480px) {
             .home {
                 width: 100%;
@@ -447,61 +404,48 @@
                 padding-left: 12px;
                 padding-right: 12px;
             }
-
             .game {
                 width: 100%;
             }
-
             .start-btn {
                 width: 100%;
             }
-
             .winner-card {
                 padding: 22px 18px;
             }
         }
-
         @media (min-width: 481px) and (max-width: 767px) {
             .home {
                 width: min(92vw, 500px);
             }
-
             .game {
                 width: 100%;
             }
         }
-
         @media (min-width: 768px) and (max-width: 1023px) {
-
             .home,
             .game {
                 width: min(84vw, 640px);
             }
-
             .board-shell {
                 margin-top: 40px;
             }
         }
-
         @media (min-width: 1024px) {
-
             .home,
             .game {
                 width: 640px;
             }
         }
-
         .map-scale-wrap {
             width: 100%;
             display: flex;
             justify-content: center;
         }
-
         .map-scale-inner {
             transform: scale(var(--map-scale, 1));
             transform-origin: top center;
         }
-
         .icon-btn {
             width: var(--icon-btn-size);
             height: var(--icon-btn-size);
@@ -514,13 +458,11 @@
             cursor: pointer;
             flex-shrink: 0;
         }
-
         .icon-btn:hover {
             transform: translateY(-2px);
             background: rgba(255, 255, 255, .15);
             box-shadow: 0 0 18px rgba(136, 146, 163, 0.45);
         }
-
         .map-outer {
             width: 100%;
             max-width: 1080px;
@@ -535,7 +477,6 @@
             background-size: cover;
             height: 100dvh;
         }
-
         .map-scroll {
             overflow-y: auto;
             overflow-x: hidden;
@@ -543,7 +484,6 @@
             scrollbar-color: #99b7d6 rgba(14, 14, 15, 0.4);
             flex: 1;
         }
-
         .map-header {
             padding: clamp(10px, 3vw, 14px) clamp(10px, 3vw, 16px) 16px;
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
@@ -552,7 +492,6 @@
             z-index: 5;
             min-height: clamp(92px, 24vw, 165px);
         }
-
         .map-header::after {
             content: "";
             position: absolute;
@@ -566,7 +505,6 @@
                     rgba(120, 180, 255, .8),
                     transparent);
         }
-
         .map-title {
             font-family: 'Baloo 2', sans-serif;
             color: #fff;
@@ -576,7 +514,6 @@
             text-align: center;
             margin-top: 10px;
         }
-
         .pill {
             display: flex;
             align-items: center;
@@ -591,83 +528,66 @@
             border: none;
             cursor: pointer;
         }
-
         .deco-bob {
             animation: decoBob 2.2s ease-in-out infinite;
         }
-
         @keyframes decoBob {
 
             0%,
             100% {
                 transform: translateY(0);
             }
-
             50% {
                 transform: translateY(-8px);
             }
         }
-
         @keyframes spinRing {
             from {
                 transform: rotate(0deg);
             }
-
             to {
                 transform: rotate(360deg);
             }
         }
-
         @keyframes decoSway {
-
             0%,
             100% {
                 transform: rotate(-6deg);
             }
-
             50% {
                 transform: rotate(6deg);
             }
         }
-
         @keyframes decoSpin {
             from {
                 transform: rotate(0deg);
             }
-
             to {
                 transform: rotate(360deg);
             }
         }
-
         @keyframes decoPulse {
-
             0%,
             100% {
                 transform: scale(1);
                 opacity: 0.9;
             }
-
             50% {
                 transform: scale(1.12);
                 opacity: 1;
             }
         }
-
         @keyframes goBounce {
-
             0%,
             100% {
                 transform: translateY(0);
             }
-
             50% {
                 transform: translateY(-6px);
             }
         }
     </style>
 </head>
-
 <body>
     <div id="root"></div>
     <script type="text/babel">
@@ -703,7 +623,6 @@
             const tier = width < 480 ? "mobile" : width < 1024 ? "tablet" : "desktop";
             return { width, tier };
         }
-
         // ==================== TRANSLATIONS ====================
         async function initI18n() {
             const lang = localStorage.getItem("appLanguage") || navigator.language || "en";
@@ -713,7 +632,6 @@
                 "bn", "ar", "cs", "uk", "sv", "pl", "ro", "sk", "tr", "vi",
                 "zh-CN", "pt-BR", "mx", "da", "no", "lv", "hr"
             ];
-
             const language = supportedLanguages.includes(lang) ? lang : "en";
             const translations = await fetch(`/locales/${language}.json`)
                 .then(res => res.json());
@@ -733,16 +651,15 @@
                 });
         }
         initI18n();
-
         const useTranslation = () => {
             const [t, setT] = useState(() => (key, options) => {
-                return i18next.t(`Game_CrossWord.${key}`, options);
+                return i18next.t(`Game_Ludo.${key}`, options);
             });
             const [currentLang, setCurrentLang] = useState(i18next.language);
             useEffect(() => {
                 const updateTranslation = () => {
                     setT(() => (key, options) =>
-                        i18next.t(`Game_CrossWord.${key}`, options)
+                        i18next.t(`Game_Ludo.${key}`, options)
                     );
                     setCurrentLang(i18next.language);
                 };
@@ -752,7 +669,6 @@
             }, []);
             return { t, currentLang };
         };
-
         const START_OFFSET = { red: 39, green: 0, yellow: 13, blue: 26 };
         const SAFE_GLOBAL = [0, 8, 13, 21, 26, 34, 39, 47];
         const ENTRY_ARROWS = {
@@ -812,14 +728,12 @@
             return coords;
         }
         const TRACK_COORDS = buildTrackCoords();
-
         const COLOR_HEX = {
             red: { main: "#df2d2d", dark: "#C92E28", soft: "#FFD9D3" },
             green: { main: "#0b8b22", dark: "#149350", soft: "#D3F5E0" },
             yellow: { main: "#ffd400", dark: "#E09400", soft: "#FFEBBE" },
             blue: { main: "#1d88e5", dark: "#1573C4", soft: "#D3E9FE" },
         };
-
         function ColorGlyph({ color, size = 30 }) {
             const hex = COLOR_HEX[color].main;
             return (
@@ -835,13 +749,13 @@
                 </svg>
             );
         }
-
-        const MODES = [
-            { id: "1bot", label: "2 Players", players: 2, sub: "You + 1 bot", dots: 2, isBot: true },
-            { id: "2bot", label: "3 Players", players: 3, sub: "You + 2 bot", dots: 3, isBot: true },
-            { id: "3bot", label: "4 Players", players: 4, sub: "You + 3 bot", dots: 4, isBot: true },
-        ];
-
+        function getModes(t) {
+            return [
+                { id: "1bot", label: t("Mode_2_Players"), players: 2, sub: t("Mode_2_Players_Sub"), isBot: true },
+                { id: "2bot", label: t("Mode_3_Players"), players: 3, sub: t("Mode_3_Players_Sub"), isBot: true },
+                { id: "3bot", label: t("Mode_4_Players"), players: 4, sub: t("Mode_4_Players_Sub"), isBot: true },
+            ];
+        }
         function CenterTriangle() {
             const hex = c => COLOR_HEX[c].main;
             return (
@@ -857,20 +771,12 @@
                 </div>
             );
         }
-
         function HomeYard({ color }) {
             const positions = { green: [0, 0], yellow: [0, 9], red: [9, 0], blue: [9, 9] };
             const [r0, c0] = positions[color];
             const hex = COLOR_HEX[color];
             return (
-                <div style={{
-                    gridRow: (r0 + 1) + " / span 6",
-                    gridColumn: (c0 + 1) + " / span 6",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    position: "relative",
-                }}>
+                <div style={{ gridRow: (r0 + 1) + " / span 6", gridColumn: (c0 + 1) + " / span 6", display: "flex", alignItems: "center",justifyContent: "center",position: "relative"}}>
                     <div style={{
                         width: "66%", height: "66%",
                         background: "white",
@@ -922,7 +828,6 @@
                 3: [{ x: -5, y: -4 }, { x: 5, y: -4 }, { x: 0, y: 5 }],
                 4: [{ x: -5, y: -5 }, { x: 5, y: -5 }, { x: -5, y: 5 }, { x: 5, y: 5 }]
             };
-
             const offset = STACK_OFFSETS[Math.min(stackCount, 4)][stackOffset];
             const dx = offset.x;
             const dy = offset.y;
@@ -945,17 +850,12 @@
                 background: COLOR_HEX[color].main,
             };
             return (
-                <div
-                    className={"token" + (movable ? " movable" : "")}
-                    style={style}
-                    onClick={movable ? onClick : undefined}
-                >
+                <div className={"token" + (movable ? " movable" : "")} style={style} onClick={movable ? onClick : undefined}>
                     <div className="token-dot" />
                     {stackCount > 1 && stackOffset === 0 && <div className="token-stack-count">{stackCount}</div>}
                 </div>
             );
         }
-
         function StarIcon() {
             return (
                 <svg viewBox="0 0 24 24" width="62%" height="62%" style={{ opacity: 0.85 }}>
@@ -968,7 +868,6 @@
                 </svg>
             );
         }
-
         const PIP_LAYOUTS = {
             1: [[50, 50]],
             2: [[25, 25], [75, 75]],
@@ -977,7 +876,6 @@
             5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
             6: [[25, 25], [75, 25], [25, 50], [75, 50], [25, 75], [75, 75]],
         };
-
         function DiceFace({ value }) {
             return (
                 <svg viewBox="0 0 100 100">
@@ -987,7 +885,6 @@
                 </svg>
             );
         }
-
         const FACE_ROTATION = {
             1: { x: 0, y: 0 },
             6: { x: 0, y: -180 },
@@ -996,7 +893,6 @@
             3: { x: -90, y: 0 },
             4: { x: 90, y: 0 },
         };
-
         function DiceCube({ value, rollId }) {
             const spinRef = useRef(0);
             const computeTransform = (v) => {
@@ -1010,15 +906,8 @@
             useEffect(() => {
                 setTransform(computeTransform(value));
             }, [rollId]);
-
             return (
-                <div
-                    className="dice-cube"
-                    style={{
-                        transform,
-                        transition: "transform 0.7s cubic-bezier(.34,1.56,.64,1)",
-                    }}
-                >
+                <div className="dice-cube" style={{transform, transition: "transform 0.7s cubic-bezier(.34,1.56,.64,1)"}}>
                     <div className="dice-face front">  <DiceFace value={1} /> </div>
                     <div className="dice-face back">   <DiceFace value={6} /> </div>
                     <div className="dice-face right">  <DiceFace value={2} /> </div>
@@ -1028,7 +917,6 @@
                 </div>
             );
         }
-
         function Dice({ value, rollId, isRolling, onRoll }) {
             return (
                 <div className="dice-wrap">
@@ -1038,7 +926,6 @@
                 </div>
             );
         }
-
         const CELL_TYPES = {
             EMPTY: "empty",
             PATH: "path",
@@ -1047,7 +934,6 @@
             HOME: "home",
             CENTER: "center"
         };
-
         function getCellBackground(cell) {
             switch (cell.type) {
                 case CELL_TYPES.YARD:
@@ -1062,7 +948,6 @@
                     return "#ffffff";
             }
         }
-
         function Cell({ board }) {
             return (
                 <>
@@ -1070,8 +955,7 @@
                         row.map((cell) => {
                             const bg = getCellBackground(cell);
                             return (
-                                <div
-                                    key={`${cell.row}-${cell.col}`}
+                                <div key={`${cell.row}-${cell.col}`}
                                     className={"cell" + (cell.safe ? " safe" : "")}
                                     style={{
                                         gridRow: cell.row + 1,
@@ -1086,7 +970,6 @@
                 </>
             );
         }
-
         function setCell(board, row, col, data) {
             Object.assign(board[row][col], data);
         }
@@ -1097,7 +980,6 @@
                 }
             }
         }
-
         function buildHomeCols() {
             const cols = { green: [], yellow: [], blue: [], red: [] };
             for (let c = 1; c <= 5; c++) cols.green.push([7, c]);
@@ -1107,7 +989,6 @@
             return cols;
         }
         const HOME_COLS = buildHomeCols();
-
         function buildCenterCoords() {
             const coords = [];
             for (let r = 6; r <= 8; r++) {
@@ -1118,14 +999,12 @@
             return coords;
         }
         const CENTER_COORDS = buildCenterCoords();
-
         const CENTER_CELLS = {
             yellow: [6.3, 7],
             green: [7, 6.3],
             blue: [7, 7.7],
             red: [7.7, 7],
         };
-
         const BOARD_SIZE = 15;
         function createBoard() {
             const board = [];
@@ -1167,7 +1046,6 @@
             });
             return board;
         }
-
         function createInitialTokens(activeColors) {
             const tokens = [];
             activeColors.forEach(color => {
@@ -1177,7 +1055,6 @@
             });
             return tokens;
         }
-
         function getMovableTokenIds(tokens, color, dice) {
             const movable = [];
             tokens.forEach(t => {
@@ -1192,7 +1069,6 @@
             });
             return movable;
         }
-
         function applyCapture(tokens, movedToken) {
             if (movedToken.pos < 0 || movedToken.pos > 50) return { tokens, captured: false };
             const globalIdx = (START_OFFSET[movedToken.color] + movedToken.pos) % 52;
@@ -1215,7 +1091,6 @@
         function isColorFinished(tokens, color) {
             return tokens.filter(t => t.color === color).every(t => t.pos === 56);
         }
-
         function Board({ tokens, movableTokenIds, onTokenClick }) {
             const board = useMemo(() => createBoard(), []);
             const tokenGroups = useMemo(() => {
@@ -1254,12 +1129,10 @@
                 </div>
             );
         }
-
-        function PlayerPanel({ player, isCurrent, diceState, onRoll }) {
+        function PlayerPanel({ player, isCurrent, diceState, onRoll, powerUps }) {
             const { t } = useTranslation();
             return (
-                <div
-                    className={`flex items-center gap-1.5 bg-white px-1.5 py-1.5 rounded-lg shadow-lg min-w-[96px] sm:min-w-[110px] transition-all duration-200 ${isCurrent ? "ring-2" : ""}`}
+                <div className={`flex items-center gap-1.5 bg-white px-1.5 py-1.5 rounded-lg shadow-lg min-w-[96px] sm:min-w-[110px] transition-all duration-200 ${isCurrent ? "ring-2" : ""}`}
                     style={{ "--tw-ring-color": COLOR_HEX[player.color].main }}
                 >
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-100 flex-shrink-0">
@@ -1275,10 +1148,10 @@
                         isRolling={diceState[player.color].rolling}
                         onRoll={isCurrent ? onRoll : undefined}
                     />
+                    {powerUps}
                 </div>
             );
         }
-
         function describeMoves(tokens, color, dice) {
             const movableIds = getMovableTokenIds(tokens, color, dice);
             return movableIds.map(id => {
@@ -1290,7 +1163,6 @@
                 let entersHomeColumn = false;
                 let finishesToken = false;
                 let leavesYard = t.pos === -1;
-
                 if (newPos <= 50) {
                     globalIdx = (START_OFFSET[color] + newPos) % 52;
                     isSafeSquare = SAFE_GLOBAL.includes(globalIdx);
@@ -1325,7 +1197,6 @@
         function pickRandom(moves) {
             return moves[Math.floor(Math.random() * moves.length)].id;
         }
-
         function warmUpMove(tokens, color, dice) {
             const moves = describeMoves(tokens, color, dice);
             if (moves.length === 0) return null;
@@ -1338,7 +1209,6 @@
             if (capture && Math.random() < 0.6) return capture.id;
             return pickRandom(moves);
         }
-
         function easyMove(tokens, color, dice) {
             const moves = describeMoves(tokens, color, dice);
             if (moves.length === 0) return null;
@@ -1397,7 +1267,6 @@
                 return false;
             });
         }
-
         function expertMove(tokens, color, dice) {
             const moves = describeMoves(tokens, color, dice);
             if (moves.length === 0) return null;
@@ -1460,7 +1329,6 @@
             const sorted = [...pool].sort((a, b) => b.token.pos - a.token.pos);
             return sorted[0].id;
         }
-
         function LegendMove(tokens, color, dice) {
             const moves = describeMoves(tokens, color, dice);
             if (moves.length === 0) return null;
@@ -1486,7 +1354,6 @@
             scored.sort((a, b) => b.s - a.s);
             return scored[0].m.id;
         }
-
         const BOT_LEVELS = {
             WARM_UP: "warm_up",
             BEGINNER: "beginner",
@@ -1501,7 +1368,6 @@
             BOT_LEVELS.WARM_UP, BOT_LEVELS.BEGINNER, BOT_LEVELS.EASY, BOT_LEVELS.MEDIUM,
             BOT_LEVELS.HARD, BOT_LEVELS.EXPERT, BOT_LEVELS.MASTER, BOT_LEVELS.LEGEND
         ];
-
         function difficultyForLevel(lvl) {
             const idx = (lvl - 1) % DIFFICULTY_LADDER.length;
             return DIFFICULTY_LADDER[idx];
@@ -1520,8 +1386,7 @@
                 default: return mediumMove(tokens, color, dice);
             }
         }
-
-        function GameScreen({ setScreen, players, soundOn, toggleSound, onLevelComplete, onExit }) {
+        function GameScreen({ setScreen, players, soundOn, toggleSound, onLevelComplete, onExit, setSurveyType, setShowSurvey, fetchSurveys }) {
             const { t } = useTranslation();
             const { tier } = useViewportTier();
             const ACTIVE_COLORS = players.map(p => p.color);
@@ -1540,6 +1405,29 @@
             const humanColor = players.find(p => !p.isBot)?.color;
             const [winner, setWinner] = useState(null);
             const [hasFiredCompletion, setHasFiredCompletion] = useState(false);
+
+            const [luckySixActive, setLuckySixActive] = useState(localStorage.getItem("ludo_regina_powerUps_survey_required") === "false");
+            const [luckySixCount, setLuckySixCount] = useState(localStorage.getItem("ludo_regina_powerUps_survey_required") === "false" ? 1 : 0);
+            const currentTokens = tokens.filter(t => t.color === currentColor);
+            const canUseLuckySix = token && !players[currentTurnIdx].isBot && currentTokens.every(t => t.pos === -1);
+            function useLuckySix() {
+                if(token && luckySixCount <= 0 && !luckySixActive) {
+                    localStorage.setItem("ludo_regina_powerUps_survey_required", "true");
+                    setSurveyType('powerUps');
+                    setShowSurvey(true);
+                    fetchSurveys();
+                    return;
+                }
+            }
+            function rollLuckySix() {
+                useLuckySix();
+                if(luckySixCount > 0){
+                    handleRoll();
+                    localStorage.removeItem("ludo_regina_powerUps_survey_required");
+                    setLuckySixActive(false);
+                    setLuckySixCount(prev => prev - 1);
+                }
+            }
 
             function getMovePath(token, steps) {
                 const path = [];
@@ -1572,7 +1460,6 @@
                     if (position === 56) playSound("pass");
                 }
             }
-
             useEffect(() => {
                 if (!winner || hasFiredCompletion) return;
                 if (winner === humanColor) {
@@ -1580,7 +1467,6 @@
                     onLevelComplete();
                 }
             }, [winner, humanColor, hasFiredCompletion, onLevelComplete]);
-
             const handleRoll = () => {
                 if (diceState[currentColor].rolling || hasRolled || movingToken) return;
                 setDiceState(prev => ({
@@ -1588,7 +1474,8 @@
                     [currentColor]: { ...prev[currentColor], rolling: true }
                 }));
                 setTimeout(() => {
-                    const roll = Math.floor(Math.random() * 6) + 1;
+                    const roll = luckySixActive ? 6 : Math.floor(Math.random() * 6) + 1;
+                    if(luckySixActive) setLuckySixActive(false);
                     setDiceState(prev => ({
                         ...prev,
                         [currentColor]: { value: roll, rolling: false, rollId: prev[currentColor].rollId + 1 }
@@ -1597,7 +1484,6 @@
                     let newSixCount = sixCount;
                     roll === 6 ? newSixCount++ : newSixCount = 0;
                     if (newSixCount === 3) {
-                        alert("Three consecutive sixes! Turn skipped.");
                         setSixCount(0);
                         setCurrentTurnIdx(prev => (prev + 1) % ACTIVE_COLORS.length);
                         setHasRolled(false);
@@ -1672,9 +1558,9 @@
                         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: "16px" }}>
                             <div className="winner-card">
                                 <h2 style={{ color: COLOR_HEX[winner].main, fontFamily: "'Baloo 2', sans-serif", fontSize: "clamp(20px,5vw,26px)", fontWeight: 800, marginBottom: "8px" }}>
-                                    {winner.charAt(0).toUpperCase() + winner.slice(1)} Wins!
+                                    {winner.charAt(0).toUpperCase() + winner.slice(1)} {t("Wins")}
                                 </h2>
-                                <button className="start-btn" onClick={onExit}>Back to Menu</button>
+                                <button className="start-btn" onClick={onExit}>{t("Back_To_Menu")}</button>
                             </div>
                         </div>
                     )}
@@ -1685,7 +1571,7 @@
                             </button>
                             <div className="flex items-center gap-1 min-w-0 justify-center flex-1">
                                 <img src="dice3.png" alt="" style={{ width: "clamp(40px,9vw,50px)", height: "clamp(40px,10vw,50px)", objectFit: "contain" }} />
-                                <span className="map-title" style={{ marginTop: 15 }}>Ludo Regina</span>
+                                <span className="map-title" style={{ marginTop: 15 }}>{t("App_Title")}</span>
                                 <img src="dice3.png" alt="" style={{ width: "clamp(40px,9vw,50px)", height: "clamp(40px,10vw,50px)", objectFit: "contain" }} />
                             </div>
                             <button className="icon-btn" onClick={toggleSound} style={{ fontSize: "clamp(15px,4vw,20px)" }}>
@@ -1700,7 +1586,6 @@
                                     onTokenClick={handleTokenClick}
                                 />
                             </div>
-
                             {players.map(p => {
                                 const cornerClass = {
                                     green: "absolute left-1 sm:left-2",
@@ -1722,6 +1607,14 @@
                                             isCurrent={currentColor === p.color}
                                             diceState={diceState}
                                             onRoll={handleRoll}
+                                            powerUps={canUseLuckySix && p.color === humanColor && (
+                                            <button className="power-btn" onClick={rollLuckySix} style={{
+                                                background: `linear-gradient(135deg,
+                                                    ${COLOR_HEX[p.color].dark},
+                                                    ${COLOR_HEX[p.color].main}
+                                                )`,
+                                                color: "#fff",
+                                            }} ><img src="Streak.avif" alt="Lucky six" className="w-8 h-8 object-contain"/>{luckySixCount}</button>)}
                                         />
                                     </div>
                                 );
@@ -1731,24 +1624,19 @@
                 </div>
             );
         }
-
         /* ═══════════════ Ludo LEVEL MAP — now viewport-scaled ═══════════════ */
-
         const TOTAL_LEVELS = 50;
         const NODE_R = 50;
         const V_GAP = 140;
         const TOP_PAD = 100;
         const BOT_PAD = 180;
-        const MAP_W = 1080; // fixed authoring canvas — scaled down to fit any viewport via .map-scale-inner
+        const MAP_W = 1080;
         const MAP_H = TOP_PAD + (TOTAL_LEVELS - 1) * V_GAP + NODE_R + BOT_PAD;
 
         const SX = [0.18, 0.82, 0.25, 0.78, 0.15, 0.85, 0.22, 0.80];
         const nx = (i) => SX[i % SX.length] * MAP_W;
         const ny = (i) => TOP_PAD + (TOTAL_LEVELS - 1 - i) * V_GAP + NODE_R;
 
-        // Scales the fixed MAP_W canvas down to fit the available width of
-        // its parent, using a ResizeObserver so it adapts live to
-        // orientation changes and window resizing on any device.
         function useMapScale(containerRef) {
             const [scale, setScale] = useState(1);
             useEffect(() => {
@@ -1770,7 +1658,6 @@
             }, [containerRef]);
             return scale;
         }
-
         function buildSmoothPath(positions) {
             if (positions.length < 2) return "";
             let d = `M ${positions[0].x} ${positions[0].y}`;
@@ -1786,7 +1673,6 @@
             }
             return d;
         }
-
         function TrailPath({ positions }) {
             const pathD = useMemo(() => buildSmoothPath(positions), [positions]);
             const TRAIL_COLOR = "#384c9e";
@@ -1825,7 +1711,6 @@
                 }
                 return pts;
             }, [positions]);
-
             return (
                 <>
                     {sparkles.map(pt => (
@@ -1848,14 +1733,12 @@
                 </>
             );
         }
-
         function LevelNode({ lvl, cx, cy, status, accent, onPress }) {
             const isLocked = status === "locked";
             const isCurrent = status === "current";
             const isCompleted = status === "completed";
             return (
-                <div
-                    style={{
+                <div style={{
                         position: "absolute",
                         left: cx - NODE_R,
                         top: cy - NODE_R,
@@ -1866,8 +1749,7 @@
                     onClick={() => !isLocked && onPress()}
                 >
                     {isCurrent && (
-                        <div
-                            style={{
+                        <div style={{
                                 position: "absolute",
                                 inset: -14,
                                 borderRadius: "50%",
@@ -1876,13 +1758,8 @@
                             }}
                         />
                     )}
-
-                    <div
-                        className={isCurrent ? "deco-bob" : ""}
-                        style={{ position: "relative", width: "100%", height: "100%" }}
-                    >
-                        <div
-                            style={{
+                    <div className={isCurrent ? "deco-bob" : ""} style={{ position: "relative", width: "100%", height: "100%" }} >
+                        <div style={{
                                 position: "absolute",
                                 inset: -8,
                                 borderRadius: "50%",
@@ -1895,10 +1772,7 @@
                                 animation: isCurrent ? "goBounce 1.4s ease-in-out infinite" : "none",
                             }}
                         />
-
-                        <img
-                            src="dice2.png"
-                            alt={`Level ${lvl}`}
+                        <img src="dice2.png" alt={`Level ${lvl}`}
                             style={{
                                 position: "relative",
                                 width: "100%",
@@ -1912,8 +1786,7 @@
                         />
                     </div>
                     {isLocked && (
-                        <span
-                            style={{
+                        <span style={{
                                 position: "absolute",
                                 inset: 0,
                                 display: "flex",
@@ -1922,13 +1795,12 @@
                                 fontSize: 16,
                             }}
                         >
-                            🔒
+                        🔒
                         </span>
                     )}
 
                     {isCompleted && (
-                        <div
-                            style={{
+                        <div style={{
                                 position: "absolute",
                                 bottom: -4,
                                 right: -4,
@@ -2047,7 +1919,6 @@
                     ? GIFT_SLOTS[Math.floor(Math.random() * GIFT_SLOTS.length)]
                     : side;
                 const rendererKey = isGiftBand ? "gift" : nextLeftRight();
-
                 items.push({
                     key: "deco-lr-" + band,
                     x: slotFrac * mapW + (Math.random() - 0.5) * 16,
@@ -2058,7 +1929,6 @@
                     duration: 2.4 + Math.random() * 1.4,
                     delay: Math.random() * 2,
                 });
-
                 for (let s = 0; s < 2; s++) {
                     const slot = LEFT_RIGHT_SLOTS[s % 2];
                     const sign = (s % 2 === 0) ? 1 : -1;
@@ -2072,21 +1942,17 @@
             }
             return { items: items, stars: stars };
         }
-
         function MapDecorations({ positions, mapW }) {
             const built = useMemo(function () { return buildDecorations(positions, mapW); }, [positions, mapW]);
             const items = built.items;
             const stars = built.stars;
-
             return (
                 <>
                     {items.map(function (d) {
                         const renderFn = DECO_RENDERERS[d.rendererKey];
                         if (!renderFn) return null;
                         return (
-                            <div
-                                key={d.key}
-                                style={{
+                            <div key={d.key} style={{
                                     position: "absolute",
                                     left: d.x,
                                     top: d.y,
@@ -2103,9 +1969,7 @@
                     })}
                     {stars.map(function (s) {
                         return (
-                            <div
-                                key={s.key}
-                                style={{
+                            <div key={s.key} style={{
                                     position: "absolute",
                                     left: s.x,
                                     top: s.y,
@@ -2125,11 +1989,9 @@
         function MapHeaderBar({ soundOn, toggleSound, score, coins, highestCompleted, totalLevels, onExit }) {
             const { t } = useTranslation();
             const pct = Math.min(100, Math.round((highestCompleted / totalLevels) * 100));
-
             const [showRewardPopup, setShowRewardPopup] = useState(false);
             const [loadingRewardHistory, setLoadingRewardHistory] = useState(false);
             const [rewardHistory, setRewardHistory] = useState([]);
-
             const [showScorePopup, setShowScorePopup] = useState(false);
             const [loadingScoreHistory, setLoadingScoreHistory] = useState(false);
             const [socreHistory, setScoreHistory] = useState([]);
@@ -2158,7 +2020,6 @@
                     setLoadingRewardHistory(false);
                 }
             };
-
             const getUserGameScore = async () => {
                 if (!token) return;
                 try {
@@ -2191,7 +2052,7 @@
                         </div>
                         <div className="flex items-center gap-2 min-w-0 justify-center flex-1">
                             <img src="dice2.png" alt="" className="sm:block" style={{ width: "clamp(40px,10vw,70px)", height: "clamp(40px,10vw,70px)", objectFit: "contain" }} />
-                            <span className="map-title truncate" style={{ marginTop: 15 }}>Ludo Regina</span>
+                            <span className="map-title truncate" style={{ marginTop: 15 }}>{t("App_Title")}</span>
                             <img src="dice2.png" alt="" className="sm:block" style={{ width: "clamp(40px,10vw,70px)", height: "clamp(40px,10vw,70px)", objectFit: "contain" }} />
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -2214,13 +2075,11 @@
 
                     <div className="w-full mt-3">
                         <div className="flex justify-between items-center mb-1">
-                            <span className="text-white/80 text-xs font-semibold">Progress</span>
+                            <span className="text-white/80 text-xs font-semibold">{t("Progress")}</span>
                             <span className="text-white text-xs font-bold">{highestCompleted} / {totalLevels}</span>
                         </div>
                         <div className="w-full h-3 rounded-full bg-white/15 overflow-hidden">
-                            <div
-                                className="h-full rounded-full"
-                                style={{
+                            <div className="h-full rounded-full" style={{
                                     width: `${pct}%`,
                                     background: "linear-gradient(90deg, #4fa3ff, #7ecbff)",
                                     transition: "width 0.4s ease",
@@ -2229,7 +2088,6 @@
                             />
                         </div>
                     </div>
-
                     {showRewardPopup && (
                         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-3">
                             <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-800 p-4 sm:p-5 shadow-2xl border border-purple-400/40">
@@ -2255,7 +2113,7 @@
                                         <div className="text-center py-10 text-sm sm:text-lg font-bold">
                                             {t("Loading")}...
                                         </div>
-                                    ) : rewardHistory.length === 0 ? (
+                                        ) : rewardHistory.length === 0 ? (
                                         <div className="text-center py-10">
                                             <i className="fa-solid fa-gift text-4xl sm:text-6xl text-white/30 mb-3"></i>
                                             <p className="text-lg sm:text-2xl font-bold text-white/70">
@@ -2265,8 +2123,8 @@
                                                 {t("Complete_levels_to_earn_rewards")}!
                                             </p>
                                         </div>
-                                    ) : (
-                                        rewardHistory.map((item) => (
+                                        ) : (
+                                            rewardHistory.map((item) => (
                                             <div
                                                 key={item.id || item.createdAt}
                                                 className="bg-white/10 border border-white/20 rounded-xl p-2 sm:p-3 flex items-center justify-between"
@@ -2384,8 +2242,7 @@
 
         function CurrentLevelFlag({ cx, cy }) {
             return (
-                <div
-                    style={{
+                <div style={{
                         position: "absolute",
                         left: cx - 18,
                         top: cy - NODE_R - 64,
@@ -2404,8 +2261,7 @@
         function CurrentLevelPopup({ cx, cy, level }) {
             const { t } = useTranslation();
             return (
-                <div
-                    style={{
+                <div style={{
                         position: "absolute",
                         left: cx,
                         top: cy + NODE_R + 16,
@@ -2414,8 +2270,7 @@
                         zIndex: 6,
                     }}
                 >
-                    <div
-                        style={{
+                    <div style={{
                             background: "#0D98BA",
                             borderRadius: 14,
                             padding: "6px 14px",
@@ -2428,8 +2283,7 @@
                             position: "relative",
                         }}
                     >
-                        <div
-                            style={{
+                        <div style={{
                                 position: "absolute",
                                 left: "50%",
                                 top: -7,
@@ -2441,7 +2295,7 @@
                                 borderBottom: "7px solid #25935c",
                             }}
                         />
-                        Level {level}
+                        {t("Level")} {level}
                     </div>
                 </div>
             );
@@ -2458,7 +2312,6 @@
                 const nodeY = ny(currentLevel - 1) * mapScale;
                 const target = Math.max(0, nodeY - 320);
                 scrollRef.current?.scrollTo({ top: target, behavior: "auto" });
-                // eslint-disable-next-line
             }, [mapScale]);
 
             const getStatus = (lvl) => lvl <= highestCompleted ? "completed" : lvl === currentLevel ? "current" : "locked";
@@ -2475,10 +2328,7 @@
                     />
                     <div className="map-scroll" ref={scrollRef}>
                         <div className="map-scale-wrap">
-                            <div
-                                ref={scaleWrapRef}
-                                className="map-scale-inner"
-                                style={{
+                            <div ref={scaleWrapRef} className="map-scale-inner" style={{
                                     "--map-scale": mapScale,
                                     position: "relative",
                                     width: MAP_W,
@@ -2489,7 +2339,6 @@
                                     <TrailPath positions={positions} />
                                     <TrailSparkles positions={positions} />
                                     <MapDecorations positions={positions} mapW={MAP_W} />
-
                                     {positions.map((p, i) => {
                                         const lvl = i + 1;
                                         const status = getStatus(lvl);
@@ -2520,12 +2369,10 @@
                 </div>
             );
         }
-        /* ═══════════════════════ CANDY-CRUSH STYLE LEVEL MAP END ═══════════════════════ */
-
+        /* ═══════════════════════ LUDO LEVEL MAP END ═══════════════════════ */
         function PlayerCard({ label, sub, active, onClick, icon }) {
             return (
-                <button
-                    className={
+                <button className={
                         "h-16 sm:h-20 w-full flex items-center justify-center gap-3 sm:gap-5 rounded-xl border-2 px-3 sm:px-4 transition " +
                         (active ? "mode-card active" : "mode-card")
                     }
@@ -2547,6 +2394,7 @@
         }
         function HomeScreen({ setScreen, setPlayers }) {
             const { t } = useTranslation();
+            const MODES = getModes(t);
             const [mode, setMode] = useState("1bot");
             const modeInfo = MODES.find(m => m.id === mode);
             const maxPlayers = modeInfo.players;
@@ -2601,17 +2449,17 @@
                         <div className="title-row">
                             <img src="dice2.png" className="dice-icon" alt="" />
                             <span className="home-title">
-                                LUDO REGINA
+                                {t("App_Title")}
                             </span>
                             <img src="dice2.png" className="dice-icon" alt="" />
                         </div>
                         <p className="home-subtitle">
-                            Tap • Roll • Win!
+                            {t("App_Tagline")}
                         </p>
                     </div>
                     <div className="home-panel">
-                        <h3 className="section-title font-extrabold mb-1">Choose a mode</h3>
-                        <p className="text-white/80 text-xs mb-4 text-center">Pick how many are playing.</p>
+                        <h3 className="section-title font-extrabold mb-1">{t("Choose_Mode")}</h3>
+                        <p className="text-white/80 text-xs mb-4 text-center">{t("Choose_Mode_Sub")}</p>
                         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 w-full">
                             <PlayerCard
                                 key={MODES[0].id}
@@ -2642,7 +2490,7 @@
                         </div>
                         <h3 className="text-yellow-300 font-extrabold text-base sm:text-lg mb-1 text-center">Your color</h3>
                         <p className="text-white/80 text-xs mb-3 text-center px-2">
-                            Choose your token color. Remaining players will be controlled by bots.
+                            {t("Your_Color_Sub")}
                         </p>
                         <div className="flex justify-center gap-2 sm:gap-3 mb-4 sm:mb-5 flex-wrap">
                             {["red", "green", "yellow", "blue"].map(c => (
@@ -2661,17 +2509,16 @@
                                 </button>
                             ))}
                         </div>
-
                         <button className="start-btn relative flex items-center justify-center" onClick={handleStart}>
                             <img
                                 src="dice2.png"
                                 className="dice-icon absolute left-4 sm:left-10 bottom-2 sm:bottom-5"
                             />
                             <span>
-                                START GAME
+                                {t("Start_Game")}
                             </span>
                         </button>
-                        <p className="text-white/70 text-[10px] sm:text-[11px] mt-4 sm:mt-5 leading-snug px-1">Roll a 6 to bring a token out of base. Land on a rival to send it home — unless they're on a star or start square. Get all 4 tokens to the center to win.</p>
+                        <p className="text-white/70 text-[10px] sm:text-[11px] mt-4 sm:mt-5 leading-snug px-1">{t("Game_Rules")}</p>
                     </div>
                 </div>
             );
@@ -2681,21 +2528,16 @@
             const { t } = useTranslation();
             const [screen, setScreen] = useState("home");
             const [players, setPlayers] = useState(null);
-
             const [soundOn, setSoundOn] = useState(true);
-
             const [activeLevel, setActiveLevel] = useState(1);
             const [score, setScore] = useState(0);
             const [coins, setCoins] = useState(0);
             const [highestLevel, setHighestLevel] = useState(1);
             const [resumeLoaded, setResumeLoaded] = useState(false);
-
             const [isGuest, setIsGuest] = useState(false);
             const [hasRated, setHasRated] = useState(false);
-
             const [highestCompleted, setHighestCompleted] = useState(0);
             const [levelStars, setLevelStars] = useState({});
-
             const [showRatingPopup, setShowRatingPopup] = useState(false);
             const [upcomingLevel, setUpcomingLevel] = useState(null);
             const [rating, setRating] = useState(0);
@@ -2703,7 +2545,6 @@
             const [ratingLevel, setRatingLevel] = useState(null);
             const [feedback, setFeedback] = useState('');
             const [feedbackError, setFeedbackError] = useState('');
-
             const [surveyLevelNumber, setSurveyLevelNumber] = useState(null);
             const [showSurvey, setShowSurvey] = useState(false);
             const [surveys, setSurveys] = useState([]);
@@ -2711,7 +2552,6 @@
             const [surveyError, setSurveyError] = useState(null);
             const [isNavigatingToSurvey, setIsNavigatingToSurvey] = useState(false);
             const [surveyType, setSurveyType] = useState(null);
-
             const [showLevelCompletePopup, setShowLevelCompletePopup] = useState(false);
             const [completingLevel, setCompletingLevel] = useState(false);
 
@@ -2779,8 +2619,8 @@
                     const res = await api.post("/api/survey/create-participant", payload);
                     if (res.data?.success && res.data?.result?.data?.landing_url) {
                         const gateLevel = surveyLevelNumber;
-                        if (surveyType === 'powerups') {
-                            localStorage.removeItem("ludo_regina_survey_required");
+                        if (surveyType === 'powerUps') {
+                            localStorage.setItem("ludo_regina_powerUps_survey_required", "false");
                         } 
                         else if (gateLevel) {
                             localStorage.removeItem(`ludo_regina_survey_required_level_${gateLevel}`);
@@ -3098,16 +2938,19 @@
                                 toggleSound={toggleSound}
                                 onLevelComplete={handleLevelComplete}
                                 onExit={onExit}
+                                setSurveyType={setSurveyType}
+                                setShowSurvey={setShowSurvey}
+                                fetchSurveys={fetchSurveys}
                             />
                         )}
                         {showLevelCompletePopup && (
                             <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: "16px" }}>
                                 <div className="winner-card">
                                     <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: "clamp(20px,5vw,26px)", fontWeight: 800, marginBottom: "8px" }}>
-                                        Level {activeLevel} Complete! 🎉
+                                        {t("Level")} {activeLevel} {t("Complete")}! 🎉
                                     </h2>
                                     <button className="start-btn" onClick={() => { setShowLevelCompletePopup(false); setScreen("map"); }}>
-                                        Continue
+                                        {t("Continue")}
                                     </button>
                                 </div>
                             </div>
@@ -3117,12 +2960,12 @@
                         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[300] p-4">
                             <div className="bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-white/10 rounded-3xl w-full max-w-[460px] max-h-[90vh] p-5 sm:p-8 text-white flex flex-col">
                                 <h2 className="text-xl sm:text-2xl font-extrabold text-center mb-2">
-                                    {surveyType === 'power'
+                                    {surveyType === 'powerUps'
                                         ? '💡' + t('Unlock_Power')
                                         :  (`${t('Level')} ${surveyLevelNumber} ${t('Complete')}! 🎉`)}
                                 </h2>
                                 <p className="text-white/70 mb-6 text-sm text-center">
-                                    {surveyType === 'power'
+                                    {surveyType === 'powerUps'
                                         ? t('Complete_a_survey_to_use_your_power')
                                         : t("Complete_a_survey_to_continue_to_the_next_level")}
                                 </p>
@@ -3243,5 +3086,4 @@
         ReactDOM.createRoot(document.getElementById("root")).render(<App />);
     </script>
 </body>
-
 </html>
